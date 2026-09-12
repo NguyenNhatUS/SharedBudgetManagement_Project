@@ -6,10 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -35,7 +32,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     Page<Transaction> findAllByBudgetIdAndTransactionDateBetween(
             Long budgetId, LocalDate startDate, LocalDate endDate, Pageable pageable);
 
-    // ====================== JOIN FETCH (fix N+1) ======================
 
     /**
      * Load danh sách giao dịch kèm tags (fix N+1 khi hiển thị danh sách).
@@ -44,7 +40,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
            "LEFT JOIN FETCH t.transactionTags tt " +
            "LEFT JOIN FETCH tt.tag " +
            "WHERE t.budget.id = :budgetId")
-    List<Transaction> findAllByBudgetIdFetchTags(@Param("budgetId") Long budgetId);
+    List<Transaction> findAllByBudgetId(Long budgetId);
 
     // ====================== Thống kê ======================
 
@@ -54,7 +50,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Query("SELECT t.type, SUM(t.amount) FROM Transaction t " +
            "WHERE t.budget.id = :budgetId " +
            "GROUP BY t.type")
-    List<Object[]> sumAmountByBudgetIdGroupByType(@Param("budgetId") Long budgetId);
+    List<Object[]> sumAmountByBudgetIdGroupByType(Long budgetId);
 
     /**
      * Tổng chi theo thành viên trong Budget.
@@ -63,16 +59,5 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
            "JOIN t.createdBy m " +
            "WHERE t.budget.id = :budgetId AND t.type = 'EXPENSE' " +
            "GROUP BY m.user.id, m.user.fullName")
-    List<Object[]> sumExpenseByBudgetIdGroupByMember(@Param("budgetId") Long budgetId);
-
-    /**
-     * Tổng chi trong khoảng thời gian (dùng cho cảnh báo vượt ngưỡng spending limit).
-     */
-    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t " +
-           "WHERE t.budget.id = :budgetId AND t.type = 'EXPENSE' " +
-           "AND t.transactionDate BETWEEN :startDate AND :endDate")
-    BigDecimal sumExpenseByBudgetIdAndDateRange(
-            @Param("budgetId") Long budgetId,
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate);
+    List<Object[]> sumExpenseByBudgetIdGroupByMember(Long budgetId);
 }

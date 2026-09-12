@@ -3,7 +3,6 @@ package com.nhat.SharedBudgetManagement.repository;
 import com.nhat.SharedBudgetManagement.entity.TransactionTag;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
 import java.util.List;
 
 @Repository
