@@ -33,9 +33,6 @@ public class User {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    /**
-     * Mật khẩu đã mã hoá (BCrypt).
-     */
     @Column(nullable = false, length = 255)
     private String password;
 
@@ -46,37 +43,11 @@ public class User {
     private String avatarUrl;
 
 
-    /**
-     * Vai trò toàn cục trong hệ thống (ADMIN / USER).
-     */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
     private UserRole role = UserRole.ROLE_USER;
 
-    /**
-     * Email đã xác thực hay chưa. Mặc định false khi đăng ký.
-     */
-    @Column(nullable = false)
-    @Builder.Default
-    private Boolean emailVerified = false;
-
-    /**
-     * Token dùng để xác thực email (TTL ngắn). Null sau khi verify thành công.
-     */
-    @Column(length = 255)
-    private String emailVerificationToken;
-
-    /**
-     * Token dùng để reset mật khẩu (dùng một lần). Null khi chưa yêu cầu.
-     */
-    @Column(length = 255)
-    private String passwordResetToken;
-
-    /**
-     * Thời điểm hết hạn của passwordResetToken.
-     */
-    private LocalDateTime passwordResetTokenExpiry;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
