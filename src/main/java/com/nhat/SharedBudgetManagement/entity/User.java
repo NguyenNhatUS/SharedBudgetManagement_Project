@@ -7,14 +7,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Entity đại diện cho tài khoản người dùng.
- * <p>
- * Một User có thể tham gia nhiều Budget thông qua entity trung gian {@link BudgetMember}.
- * Role toàn cục (ADMIN/USER) được quản lý qua {@link UserRole},
- * còn role theo từng Budget được quản lý trong {@link BudgetMember}.
- * </p>
- */
+
 @Entity
 @Table(name = "users", indexes = {
         @Index(name = "idx_user_email", columnList = "email", unique = true)
@@ -30,7 +23,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(nullable = false, length = 100)
     private String email;
 
     @Column(nullable = false, length = 255)
@@ -41,7 +34,6 @@ public class User {
 
     @Column(length = 500)
     private String avatarUrl;
-
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -54,24 +46,15 @@ public class User {
 
     private LocalDateTime updatedAt;
 
-    // ====================== Relationships ======================
 
-    /**
-     * Danh sách tư cách thành viên (Budget mà user tham gia).
-     * mappedBy = "user" → BudgetMember là owning side.
-     */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<BudgetMember> budgetMemberships = new ArrayList<>();
 
-    /**
-     * Danh sách refresh token đang hiệu lực của user.
-     */
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<RefreshToken> refreshTokens = new ArrayList<>();
-
-    // ====================== Lifecycle callbacks ======================
 
     @PrePersist
     protected void onCreate() {

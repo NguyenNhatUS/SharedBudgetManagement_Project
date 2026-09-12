@@ -3,7 +3,6 @@ package com.nhat.SharedBudgetManagement.entity;
 import com.nhat.SharedBudgetManagement.entity.enums.TransactionType;
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -11,11 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Entity đại diện cho một khoản thu/chi thuộc về một {@link Budget}.
- * <p>
- * Mỗi Transaction do một {@link BudgetMember} tạo (phải có quyền OWNER hoặc EDITOR).
- * Có thể gắn nhiều {@link Tag} thông qua entity trung gian {@link TransactionTag}.
- * </p>
+ * Entity đại diện cho một khoản thu/chi thuộc về một {Budget}.
+ * Mỗi Transaction do một {BudgetMember} tạo (phải có quyền OWNER hoặc EDITOR).
+ * Có thể gắn nhiều {Tag} thông qua entity trung gian {TransactionTag}.
  */
 @Entity
 @Table(name = "transactions", indexes = {
@@ -35,34 +32,24 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Loại giao dịch: INCOME (thu) hoặc EXPENSE (chi).
-     */
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private TransactionType type;
 
-    /**
-     * Số tiền giao dịch. Luôn dương — type quyết định thu hay chi.
-     */
+
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
 
-    /**
-     * Mô tả ngắn về giao dịch.
-     */
+
     @Column(nullable = false, length = 255)
     private String description;
 
-    /**
-     * Ghi chú chi tiết (tuỳ chọn).
-     */
+
     @Column(length = 1000)
     private String note;
 
-    /**
-     * Ngày thực hiện giao dịch (do user chọn, có thể khác ngày tạo record).
-     */
+
     @Column(name = "transaction_date", nullable = false)
     private LocalDate transactionDate;
 
@@ -71,11 +58,7 @@ public class Transaction {
 
     private LocalDateTime updatedAt;
 
-    // ====================== Relationships ======================
 
-    /**
-     * Budget mà giao dịch thuộc về.
-     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "budget_id", nullable = false)
     private Budget budget;
@@ -89,15 +72,11 @@ public class Transaction {
     @JoinColumn(name = "created_by", nullable = false)
     private BudgetMember createdBy;
 
-    /**
-     * Danh sách tag gắn với giao dịch.
-     * mappedBy = "transaction" → TransactionTag là owning side.
-     */
+
     @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<TransactionTag> transactionTags = new ArrayList<>();
 
-    // ====================== Lifecycle callbacks ======================
 
     @PrePersist
     protected void onCreate() {
