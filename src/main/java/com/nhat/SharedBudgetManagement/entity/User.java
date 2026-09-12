@@ -1,10 +1,8 @@
 package com.nhat.SharedBudgetManagement.entity;
 
-import com.nhat.SharedBudgetManagement.entity.enums.AuthProvider;
 import com.nhat.SharedBudgetManagement.entity.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,9 +34,9 @@ public class User {
     private String email;
 
     /**
-     * Mật khẩu đã mã hoá (BCrypt). Nullable khi user đăng nhập qua OAuth2.
+     * Mật khẩu đã mã hoá (BCrypt).
      */
-    @Column(length = 255)
+    @Column(nullable = false, length = 255)
     private String password;
 
     @Column(nullable = false, length = 50)
@@ -47,19 +45,6 @@ public class User {
     @Column(length = 500)
     private String avatarUrl;
 
-    /**
-     * Phương thức xác thực: LOCAL (email/password) hoặc GOOGLE (OAuth2).
-     */
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    @Builder.Default
-    private AuthProvider authProvider = AuthProvider.LOCAL;
-
-    /**
-     * ID từ nhà cung cấp OAuth2 (Google sub). Null khi LOCAL.
-     */
-    @Column(length = 255)
-    private String providerId;
 
     /**
      * Vai trò toàn cục trong hệ thống (ADMIN / USER).
@@ -70,7 +55,7 @@ public class User {
     private UserRole role = UserRole.ROLE_USER;
 
     /**
-     * Email đã xác thực hay chưa. Mặc định false khi đăng ký LOCAL.
+     * Email đã xác thực hay chưa. Mặc định false khi đăng ký.
      */
     @Column(nullable = false)
     @Builder.Default
