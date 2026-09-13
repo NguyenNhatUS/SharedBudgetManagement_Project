@@ -21,7 +21,7 @@
   - [Prerequisites](#prerequisites)
   - [Database Configuration](#database-configuration)
   - [Build & Run](#build--run)
-- [API Documentation](#-api-documentation)
+- [API Documentation & Quick Test Samples](#-api-documentation--quick-test-samples)
 - [Roadmap & Implementation Phases](#-roadmap--implementation-phases)
 
 ---
@@ -254,15 +254,87 @@ src/main/java/com/nhat/SharedBudgetManagement/
 
 ---
 
-## 📡 API Documentation
+## 📡 API Documentation & Quick Test Samples
 
-> ℹ️ **Note:** Detailed API documentation, Swagger/OpenAPI interactive UI, and request/response specifications will be expanded and added in subsequent phases.
+> 💡 **Note**: Base URL: `http://localhost:8080`. Until Phase 5 (Spring Security & JWT) is integrated, `userId` is supplied as a query parameter for demonstration.
 
-Currently available endpoint groups (prefixed with `/api/v1`):
-* `/api/v1/budgets`: Budget CRUD, member invitations, invite acceptance/decline, role modification, member removal.
-* `/api/v1/budgets/{budgetId}/transactions`: Transaction CRUD, date/type filtering with pagination, financial summary reports.
-* `/api/v1/tags`: Tag creation and lookup.
-* `/api/v1/users`: Profile viewing and updating.
+Below are the **4 most essential API workflows** to test the core features:
+
+### 1. Create a Shared Budget
+Creates a new budget and atomically assigns the calling user as the `OWNER`.
+
+```bash
+curl -X POST "http://localhost:8080/api/v1/budgets?userId=1" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Housemates 2026",
+    "description": "Monthly apartment sharing",
+    "currency": "VND"
+  }'
+```
+
+---
+
+### 2. Invite a Member & Accept via One-Time Token
+**Step A: Invite a member (as OWNER)**
+```bash
+curl -X POST "http://localhost:8080/api/v1/budgets/1/members/invite" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "roommate@example.com",
+    "role": "EDITOR"
+  }'
+```
+*The response returns an `inviteToken` (e.g. `c4a8d09b-2b23-4412-b918-a6d59bdf4321`) with status `PENDING`.*
+
+**Step B: Invited user accepts the invite**
+```bash
+curl -X POST "http://localhost:8080/api/v1/budgets/members/accept?token=c4a8d09b-2b23-4412-b918-a6d59bdf4321"
+```
+*The status changes to `ACCEPTED`, `joinedAt` is recorded, and the token is automatically wiped.*
+
+---
+
+### 3. Record an Expense with Tags
+Creates a transaction and associates it with category tags in a single database transaction.
+
+```bash
+curl -X POST "http://localhost:8080/api/v1/budgets/1/transactions?userId=1" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "EXPENSE",
+    "amount": 250000,
+    "description": "Supermarket groceries",
+    "note": "Purchased milk, eggs, vegetables",
+    "transactionDate": "2026-09-15",
+    "tagIds": [1, 2]
+  }'
+```
+
+---
+
+### 4. Get Financial Summary for Dashboard
+Aggregates total income and total expense for the budget.
+
+```bash
+curl -X GET "http://localhost:8080/api/v1/budgets/1/transactions/summary"
+```
+**Sample Response:**
+```json
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "EXPENSE": 250000,
+    "INCOME": 5000000
+  },
+  "timestamp": "2026-09-13T11:25:00"
+}
+```
+
+---
+
+> ℹ️ *Interactive OpenAPI/Swagger documentation and full contract schemas will be added in upcoming phases.*
 
 ---
 
