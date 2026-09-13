@@ -11,5 +11,5 @@ public interface UserService {
 
     boolean existsByEmail(String email);
 
-    User updateProfile(Long userId, String fullName);
+    User updateProfile(Long userId, String fullName, String avatarUrl);
 }

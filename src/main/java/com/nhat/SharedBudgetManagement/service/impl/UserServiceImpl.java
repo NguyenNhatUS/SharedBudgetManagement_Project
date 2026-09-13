@@ -36,9 +36,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public User updateProfile(Long userId, String fullName) {
+    public User updateProfile(Long userId, String fullName, String avatarUrl) {
         User user = getUserById(userId);
         user.setFullName(fullName);
+        user.setAvatarUrl(avatarUrl);
         return userRepository.save(user);
     }
 }
