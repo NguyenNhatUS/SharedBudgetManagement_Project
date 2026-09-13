@@ -34,28 +34,20 @@ public class RefreshToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Giá trị token (UUID hoặc chuỗi random an toàn).
-     */
+
     @Column(nullable = false, unique = true, length = 255)
     private String token;
 
-    /**
-     * Thời điểm hết hạn.
-     */
+
     @Column(nullable = false)
     private LocalDateTime expiryDate;
 
-    /**
-     * Đánh dấu token đã bị thu hồi (rotation hoặc logout).
-     */
+
     @Column(nullable = false)
     @Builder.Default
     private Boolean revoked = false;
 
-    /**
-     * User sở hữu refresh token này.
-     */
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -63,14 +55,10 @@ public class RefreshToken {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    // ====================== Lifecycle callbacks ======================
-
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
-
-    // ====================== Helper methods ======================
 
     /**
      * Kiểm tra token có còn hiệu lực không (chưa hết hạn và chưa bị thu hồi).

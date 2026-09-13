@@ -2,7 +2,6 @@ package com.nhat.SharedBudgetManagement.service;
 
 import com.nhat.SharedBudgetManagement.entity.BudgetMember;
 import com.nhat.SharedBudgetManagement.entity.enums.BudgetRole;
-
 import java.util.List;
 
 public interface BudgetMemberService {

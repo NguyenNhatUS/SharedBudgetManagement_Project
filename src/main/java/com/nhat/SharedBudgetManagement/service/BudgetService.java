@@ -1,13 +1,11 @@
 package com.nhat.SharedBudgetManagement.service;
 
 import com.nhat.SharedBudgetManagement.entity.Budget;
-
-import java.math.BigDecimal;
 import java.util.List;
 
 public interface BudgetService {
 
-    Budget createBudget(Long userId, String name, String description, String currency, BigDecimal spendingLimit);
+    Budget createBudget(Long userId, String name, String description, String currency);
 
     Budget getBudgetById(Long budgetId);
 
@@ -15,7 +13,7 @@ public interface BudgetService {
 
     List<Budget> getAllBudgetsByUserId(Long userId);
 
-    Budget updateBudget(Long budgetId, String name, String description, String currency, BigDecimal spendingLimit);
+    Budget updateBudget(Long budgetId, String name, String description, String currency);
 
     void deleteBudget(Long budgetId);
 }

@@ -13,7 +13,6 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -26,10 +25,7 @@ public class BudgetMemberServiceImpl implements BudgetMemberService {
     private final BudgetRepository budgetRepository;
     private final UserRepository userRepository;
 
-    /**
-     * Mời thành viên: tạo BudgetMember PENDING + sinh inviteToken.
-     * Token sẽ được gửi qua email ở giai đoạn Mail (Giai đoạn 6).
-     */
+
     @Override
     @Transactional
     public BudgetMember inviteMember(Long budgetId, String email, BudgetRole role) {
@@ -39,12 +35,11 @@ public class BudgetMemberServiceImpl implements BudgetMemberService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
 
-        // Kiểm tra user đã là thành viên chưa
+
         if (budgetMemberRepository.existsByUserIdAndBudgetId(user.getId(), budgetId)) {
             throw new IllegalStateException("User is already a member of this budget");
         }
 
-        // Không cho mời với role OWNER
         if (role == BudgetRole.OWNER) {
             throw new IllegalArgumentException("Cannot invite a member with OWNER role");
         }
@@ -72,7 +67,7 @@ public class BudgetMemberServiceImpl implements BudgetMemberService {
 
         member.setStatus(MemberStatus.ACCEPTED);
         member.setJoinedAt(LocalDateTime.now());
-        member.setInviteToken(null); // Xoá token sau khi xử lý
+        member.setInviteToken(null);
         return budgetMemberRepository.save(member);
     }
 
@@ -97,12 +92,12 @@ public class BudgetMemberServiceImpl implements BudgetMemberService {
         BudgetMember member = budgetMemberRepository.findByUserIdAndBudgetId(userId, budgetId)
                 .orElseThrow(() -> new EntityNotFoundException("Member not found in this budget"));
 
-        // Không cho đổi role của OWNER
+
         if (member.getRole() == BudgetRole.OWNER) {
             throw new IllegalStateException("Cannot change the role of the OWNER");
         }
 
-        // Không cho đổi thành OWNER
+
         if (newRole == BudgetRole.OWNER) {
             throw new IllegalArgumentException("Cannot assign OWNER role to a member");
         }
@@ -117,7 +112,7 @@ public class BudgetMemberServiceImpl implements BudgetMemberService {
         BudgetMember member = budgetMemberRepository.findByUserIdAndBudgetId(userId, budgetId)
                 .orElseThrow(() -> new EntityNotFoundException("Member not found in this budget"));
 
-        // Không cho xoá OWNER
+
         if (member.getRole() == BudgetRole.OWNER) {
             throw new IllegalStateException("Cannot remove the OWNER from the budget");
         }
@@ -131,7 +126,7 @@ public class BudgetMemberServiceImpl implements BudgetMemberService {
         BudgetMember member = budgetMemberRepository.findByUserIdAndBudgetId(userId, budgetId)
                 .orElseThrow(() -> new EntityNotFoundException("Member not found in this budget"));
 
-        // OWNER không được rời nhóm (phải chuyển quyền trước hoặc xoá Budget)
+
         if (member.getRole() == BudgetRole.OWNER) {
             throw new IllegalStateException("OWNER cannot leave the budget. Transfer ownership or delete the budget instead.");
         }

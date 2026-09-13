@@ -2,7 +2,6 @@ package com.nhat.SharedBudgetManagement.service;
 
 import com.nhat.SharedBudgetManagement.entity.User;
 
-import java.util.Optional;
 
 public interface UserService {
 
@@ -12,5 +11,5 @@ public interface UserService {
 
     boolean existsByEmail(String email);
 
-    User updateProfile(Long userId, String fullName, String avatarUrl);
+    User updateProfile(Long userId, String fullName);
 }

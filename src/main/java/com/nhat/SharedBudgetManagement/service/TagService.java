@@ -6,9 +6,9 @@ import java.util.List;
 
 public interface TagService {
 
-    Tag createTag(String name, String color, String icon);
+    Tag createTag(String name);
 
-    Tag updateTag(Long tagId, String name, String color, String icon);
+    Tag updateTag(Long tagId, String name);
 
     void deleteTag(Long tagId);
 

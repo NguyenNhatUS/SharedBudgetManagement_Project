@@ -18,26 +18,23 @@ public class TagServiceImpl implements TagService {
 
     @Override
     @Transactional
-    public Tag createTag(String name, String color, String icon) {
+    public Tag createTag(String name) {
         if (tagRepository.existsByName(name)) {
             throw new IllegalArgumentException("Tag with name '" + name + "' already exists");
         }
 
         Tag tag = Tag.builder()
                 .name(name)
-                .color(color)
-                .icon(icon)
                 .build();
         return tagRepository.save(tag);
     }
 
     @Override
     @Transactional
-    public Tag updateTag(Long tagId, String name, String color, String icon) {
+    public Tag updateTag(Long tagId, String name) {
         Tag tag = getTagById(tagId);
         tag.setName(name);
-        tag.setColor(color);
-        tag.setIcon(icon);
+
         return tagRepository.save(tag);
     }
 
