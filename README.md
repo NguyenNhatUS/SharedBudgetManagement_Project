@@ -343,6 +343,19 @@ curl -X GET "http://localhost:8080/api/v1/budgets/1/transactions/summary"
 - [x] **Phase 1: Database & Entity Design** — Tables, intermediate entities, relationships, constraints, and enums.
 - [x] **Phase 2: Base CRUD & Advanced JPA** — Repositories, pagination/sorting, `@EntityGraph` anti-N+1 loading, atomic service transactions.
 - [x] **Phase 3: REST API Layer & DTO Standardization** — MapStruct mappers, `ApiResponse<T>` / `PageResponse<T>`, request validations, versioned controllers.
-- [ ] **Phase 4: Global Exception Handling** — `@RestControllerAdvice`, domain exception taxonomy, and structured error reporting.
-- [ ] **Phase 5: Security, JWT & Resource Authorization** — Stateless JWT filter, access/refresh token rotation, Budget role verification.
-- [ ] **Phase 6: OpenAPI Documentation & Interactive Frontend** — SpringDoc Swagger UI, and clean responsive web UI.
+- [ ] **Phase 4: Global Exception Handling** — `@RestControllerAdvice`, domain error hierarchy, and structured error responses.
+- [ ] **Phase 5: Core Security & JWT Authentication** — Spring Security 6, login/register, JWT access/refresh token rotation, Resource-Based Authorization (`OWNER`, `EDITOR`, `VIEWER`).
+- [ ] **Phase 6: OAuth2 Social Login Integration** — Add Google OAuth2 Login as an additional authentication provider, reusing the JWT issuance pipeline.
+- [ ] **Phase 7: Redis Caching & Rate Limiting** — Cache-Aside for tags/summaries, token blacklisting for instant logout, sliding-window rate limiting.
+- [ ] **Phase 8: Spring Mail Integration** — Asynchronous email delivery for budget invitations (`inviteToken`), password reset (TTL via Redis), and spending alerts.
+- [ ] **Phase 9: Interactive OpenAPI / Swagger Documentation** — SpringDoc OpenAPI 3 interactive API playground with Bearer Auth support.
+- [ ] **Phase 10: Automated Testing Suite** — JUnit 5 + Mockito service tests and core flow integration testing.
+- [ ] **Phase 11: Web Frontend Interface** — Modern, responsive UI built with HTML5, Vanilla CSS, and JavaScript (Fetch API).
+- [ ] **Phase 12: Containerization & DevOps** — Multi-stage `Dockerfile`, `docker-compose.yml` (App + MySQL + Redis), and CI/CD pipelines.
+
+---
+
+## 📚 Supplementary Documentation
+
+* **[TONG_KET_CAC_GIAI_DOAN.md](TONG_KET_CAC_GIAI_DOAN.md)**: Detailed phase-by-phase Vietnamese architectural summary, recent bug fixes, and development context.
+* **[BudgetShare-Project.md](BudgetShare-Project.md)**: Original project proposal and requirements specification.

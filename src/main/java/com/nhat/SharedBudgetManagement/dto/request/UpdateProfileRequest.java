@@ -17,5 +17,8 @@ public class UpdateProfileRequest {
     @Size(max = 50, message = "Full name must not exceed 50 characters")
     private String fullName;
 
+    @NotBlank(message = "Avatar URL is required")
+    @Size(max = 500, message = "Avatar URL must not exceed 50 characters")
+    private String avatarUrl;
 
 }
