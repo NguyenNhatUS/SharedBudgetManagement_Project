@@ -7,22 +7,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
-/**
- * Wrapper chuẩn hoá cho mọi REST API response.
- * {
- *   "status": 200,
- *   "message": "Budget created successfully",
- *   "data": { ... },
- *   "timestamp": "2026-09-12T07:00:00"
- * }
- */
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
-
     private int status;
     private String message;
     private T data;
@@ -30,7 +21,6 @@ public class ApiResponse<T> {
     @Builder.Default
     private LocalDateTime timestamp = LocalDateTime.now();
 
-    // ====================== Factory methods ======================
 
     public static <T> ApiResponse<T> success(T data) {
         return ApiResponse.<T>builder()

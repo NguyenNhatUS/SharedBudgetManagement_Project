@@ -7,17 +7,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Page;
 import java.util.List;
 
-/**
- * Wrapper chuẩn hoá cho response có phân trang.
- * {
- *   "content": [...],
- *   "page": 0,
- *   "size": 20,
- *   "totalElements": 150,
- *   "totalPages": 8,
- *   "last": false
- * }
- */
+
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -31,9 +22,7 @@ public class PageResponse<T> {
     private int totalPages;
     private boolean last;
 
-    /**
-     * Chuyển đổi từ Spring Data {@link Page} sang PageResponse.
-     */
+
     public static <T> PageResponse<T> from(Page<T> page) {
         return PageResponse.<T>builder()
                 .content(page.getContent())
