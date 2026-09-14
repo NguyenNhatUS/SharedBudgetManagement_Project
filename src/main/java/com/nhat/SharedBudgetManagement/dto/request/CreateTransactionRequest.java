@@ -6,7 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -34,8 +33,6 @@ public class CreateTransactionRequest {
     @NotNull(message = "Transaction date is required")
     private LocalDate transactionDate;
 
-    /**
-     * Danh sách tag ID để gắn vào giao dịch. Có thể null hoặc rỗng.
-     */
+
     private List<Long> tagIds;
 }
