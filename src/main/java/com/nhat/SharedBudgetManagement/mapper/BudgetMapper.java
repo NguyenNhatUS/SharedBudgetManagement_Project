@@ -7,7 +7,7 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring", uses = {UserMapper.class})
 public interface BudgetMapper {
-
-    @Mapping(target = "memberCount", expression = "java(budget.getMembers() != null ? budget.getMembers().size() : 0)")
+    @Mapping(target = "memberCount",
+            expression = "java(budget.getMembers() != null ? budget.getMembers().size() : 0)")
     BudgetResponse toResponse(Budget budget);
 }
