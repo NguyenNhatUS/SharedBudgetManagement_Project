@@ -1,0 +1,16 @@
+package com.nhat.SharedBudgetManagement.exception;
+
+public class ConflictException extends AppException {
+
+    public ConflictException(String message) {
+        super(ErrorCode.RESOURCE_ALREADY_EXISTS, message);
+    }
+
+    public ConflictException(ErrorCode errorCode) {
+        super(errorCode);
+    }
+
+    public ConflictException(ErrorCode errorCode, String message) {
+        super(errorCode, message);
+    }
+}

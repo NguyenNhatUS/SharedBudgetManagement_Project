@@ -1,12 +1,12 @@
 package com.nhat.SharedBudgetManagement.common;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.nhat.SharedBudgetManagement.exception.ErrorCode;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
-
 
 @Data
 @NoArgsConstructor
@@ -20,7 +20,6 @@ public class ApiResponse<T> {
 
     @Builder.Default
     private LocalDateTime timestamp = LocalDateTime.now();
-
 
     public static <T> ApiResponse<T> success(T data) {
         return ApiResponse.<T>builder()
@@ -57,6 +56,36 @@ public class ApiResponse<T> {
         return ApiResponse.<Void>builder()
                 .status(status)
                 .message(message)
+                .build();
+    }
+
+    public static <T> ApiResponse<T> error(int status, String message, T data) {
+        return ApiResponse.<T>builder()
+                .status(status)
+                .message(message)
+                .data(data)
+                .build();
+    }
+
+    public static ApiResponse<Void> error(ErrorCode errorCode) {
+        return ApiResponse.<Void>builder()
+                .status(errorCode.getHttpStatus().value())
+                .message(errorCode.getMessage())
+                .build();
+    }
+
+    public static ApiResponse<Void> error(ErrorCode errorCode, String customMessage) {
+        return ApiResponse.<Void>builder()
+                .status(errorCode.getHttpStatus().value())
+                .message(customMessage != null ? customMessage : errorCode.getMessage())
+                .build();
+    }
+
+    public static <T> ApiResponse<T> error(ErrorCode errorCode, String customMessage, T data) {
+        return ApiResponse.<T>builder()
+                .status(errorCode.getHttpStatus().value())
+                .message(customMessage != null ? customMessage : errorCode.getMessage())
+                .data(data)
                 .build();
     }
 }

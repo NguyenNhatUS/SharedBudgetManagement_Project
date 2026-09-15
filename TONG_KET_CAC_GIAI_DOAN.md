@@ -60,22 +60,55 @@
 ### 🔹 Giai đoạn 3: Chuẩn Hóa Lớp REST API, DTO & MapStruct
 * **Chuẩn hóa cấu trúc Response (`common`)**:
   * `ApiResponse<T>`: Format chuẩn gồm `status`, `message`, `data`, `timestamp`.
-  * `PageResponse<T>`: Format phân trang chuẩn hóa cho Frontend gồm `items`, `pageNumber`, `pageSize`, `totalElements`, `totalPages`, `isLast`.
+  * `PageResponse<T>`: Format phân trang & sắp xếp chuẩn hóa cho Frontend gồm `content`, `page`, `size`, `totalElements`, `totalPages`, `first`, `last`, `empty`, `sortBy`, `sortDirection`. Tích hợp static factory method `PageResponse.from(page, mapper)` giúp chuyển đổi trực tiếp từ Spring Data `Page<Entity>` sang DTO trong 1 dòng lệnh.
 * **DTO Layer (`dto`)**:
   * 9 Request DTOs được validate chặt chẽ với Jakarta Bean Validation (`@NotBlank`, `@Size`, `@Positive`, `@NotNull`, `@Email`): `CreateBudgetRequest`, `UpdateBudgetRequest`, `InviteMemberRequest`, `ChangeMemberRoleRequest`, `CreateTransactionRequest`, `UpdateTransactionRequest`, `CreateTagRequest`, `UpdateTagRequest`, `UpdateProfileRequest`.
   * 5 Response DTOs che giấu password và token nhạy cảm: `UserResponse`, `BudgetResponse`, `BudgetMemberResponse`, `TransactionResponse`, `TagResponse`.
 * **MapStruct Mappers (`mapper`)**:
   * `UserMapper`, `BudgetMapper`, `BudgetMemberMapper`, `TagMapper`, `TransactionMapper` (chuyển đổi danh sách `TransactionTag` thành danh sách `TagResponse` phẳng).
 * **4 REST Controllers (`controller.v1`)**:
-  * `BudgetController` (`/api/v1/budgets`): CRUD ngân sách + toàn bộ API quản lý thành viên.
-  * `TransactionController` (`/api/v1/budgets/{budgetId}/transactions`): CRUD giao dịch theo dạng Nested Resource, hỗ trợ lọc ngày/loại kèm phân trang, API thống kê `/summary` và `/by-member`.
-  * `TagController` (`/api/v1/tags`): Quản lý danh mục.
+  * `BudgetController` (`/api/v1/budgets`): CRUD ngân sách + toàn bộ API quản lý thành viên. Áp dụng `PageResponse` có phân trang & sắp xếp cho `GET /api/v1/budgets` (mặc định sort `createdAt,desc`) và `GET /api/v1/budgets/{budgetId}/members` (mặc định sort `joinedAt,asc`).
+  * `TransactionController` (`/api/v1/budgets/{budgetId}/transactions`): CRUD giao dịch theo dạng Nested Resource, hỗ trợ lọc ngày/loại kèm phân trang & sắp xếp trả về `PageResponse` (mặc định sort `transactionDate,desc`), API thống kê `/summary` và `/expense-by-member`.
+  * `TagController` (`/api/v1/tags`): Quản lý danh mục, hỗ trợ phân trang & sắp xếp qua `PageResponse` (mặc định sort `name,asc`).
   * `UserController` (`/api/v1/users`): Xem và cập nhật hồ sơ cá nhân.
+
+### 🔹 Giai đoạn 4: Global Exception Handling (Xử Lý Ngoại Lệ Toàn Cục)
+* **Tài liệu kiểm tra chi tiết**: Xem file [`KIEM_TRA_GIAI_DOAN_4.md`](KIEM_TRA_GIAI_DOAN_4.md).
+* **Chuẩn hóa danh mục mã lỗi (`exception.ErrorCode`)**:
+  * Enum tập trung định nghĩa 18 mã lỗi định danh (`VALIDATION_FAILED`, `USER_NOT_FOUND`, `BUDGET_NOT_FOUND`, `TAG_ALREADY_EXISTS`, `CANNOT_MODIFY_OWNER`,...).
+* **Hệ thống Custom Domain Exceptions (`exception`)**:
+  * `AppException`: Runtime exception gốc chứa `ErrorCode` và `customMessage`.
+  * `ResourceNotFoundException` (HTTP 404), `BadRequestException` (HTTP 400), `ConflictException` (HTTP 409), `ForbiddenException` (HTTP 403), `UnauthorizedException` (HTTP 401).
+* **Bộ điều hướng xử lý ngoại lệ toàn cục (`exception.GlobalExceptionHandler`)**:
+  * Sử dụng `@RestControllerAdvice` bắt và gói toàn bộ exception về chuẩn `ApiResponse<T>`.
+  * Bắt `MethodArgumentNotValidException` ➜ Trả về `Map<String, String>` chi tiết lỗi từng trường (`fieldName: errorMessage`).
+  * Bắt `AppException` và các lớp con ➜ Trả về HTTP status và message tương ứng.
+  * Bắt `EntityNotFoundException` (JPA) ➜ Trả về HTTP 404.
+  * Bắt `IllegalArgumentException`, `IllegalStateException` ➜ Trả về HTTP 400.
+  * Bắt `Exception` (lỗi 500) ➜ Ghi log SLF4J chi tiết stacktrace và ẩn lỗi nhạy cảm khỏi client.
+* **Refactor toàn bộ tầng Service**:
+  * Các service (`UserServiceImpl`, `BudgetServiceImpl`, `BudgetMemberServiceImpl`, `TransactionServiceImpl`, `TagServiceImpl`) đều ném đúng Custom Domain Exception.
+* **Unit Testing (`GlobalExceptionHandlerTest`)**:
+  * 8 test cases kiểm thử toàn diện các luồng bắt lỗi, nâng tổng số test của dự án lên 12 tests.
 
 ---
 
 ## 🛠 3. LỊCH SỬ SỬA LỖI & TINH CHỈNH GẦN NHẤT
 
+* **Hoàn thiện Giai đoạn 4: Global Exception Handling**:
+  * Xây dựng `ErrorCode`, `AppException`, các domain exceptions (400, 403, 404, 409) và `GlobalExceptionHandler`.
+  * Refactor toàn bộ service layer sang domain exception.
+  * Bổ sung 8 test cases `GlobalExceptionHandlerTest`.
+  * Tạo tài liệu đối soát [`KIEM_TRA_GIAI_DOAN_4.md`](KIEM_TRA_GIAI_DOAN_4.md).
+* **Hoàn thiện Pagination & Sorting với `PageResponse<T>`**:
+  * Bổ sung đầy đủ metadata sắp xếp và trạng thái vào `PageResponse`: `first`, `empty`, `sortBy`, `sortDirection`.
+  * Cung cấp helper `PageResponse.from(page, mapper)` tối ưu hoá code chuyển đổi DTO ở Controller.
+  * Tích hợp `PageResponse` đồng bộ cho toàn bộ các endpoint danh sách:
+    * `GET /api/v1/budgets?userId={id}&page=0&size=10&sort=createdAt,desc`
+    * `GET /api/v1/budgets/{budgetId}/members?page=0&size=20&sort=joinedAt,asc`
+    * `GET /api/v1/budgets/{budgetId}/transactions?page=0&size=20&sort=transactionDate,desc`
+    * `GET /api/v1/tags?page=0&size=20&sort=name,asc`
+  * Bổ sung Unit Test `PageResponseTest` kiểm thử đầy đủ các kịch bản phân trang, sắp xếp và mapping.
 * **Nguyên nhân lỗi Terminal trước đó**:
   * Trong `UserRepository` còn sót lại 2 derived query methods: `findByEmailVerificationToken` và `findByPasswordResetToken`.
   * Khi `User` entity đã xóa 2 trường này (thuộc phần mail), Spring Data JPA không parse được thuộc tính và ném ra `PropertyReferenceException`, làm sập `ApplicationContext`.
@@ -84,9 +117,18 @@
   * Đã xóa `spendingLimit` khỏi `Budget`, DTOs, và query thống kê trong `TransactionRepository`.
   * Đã xóa `emailVerified` khỏi `UserResponse`.
 * **Tình trạng hiện tại**:
-  * Biên dịch: `.\mvnw.cmd clean compile` ➜ **BUILD SUCCESS** (0 error, 0 warning).
-  * Unit Test: `.\mvnw.cmd test` ➜ **BUILD SUCCESS** (`contextLoads` passed 100%).
+  * Biên dịch: `.\mvnw.cmd clean compile` ➜ **BUILD SUCCESS** (78 source files, 0 error, 0 warning).
+  * Unit Test: `.\mvnw.cmd test` ➜ **BUILD SUCCESS** (37/37 tests passed 100%).
   * Khởi động: Tomcat lắng nghe ổn định tại cổng `8080`.
+* **Hoàn thành Giai đoạn 5: Spring Security 6 & JWT Authentication**:
+  * Tích hợp thư viện JJWT `0.12.6` và cấu hình bí mật HMAC-SHA256 trong `application.properties`.
+  * Xây dựng tầng bảo mật cốt lõi: `UserPrincipal`, `CustomUserDetailsService`, `JwtTokenProvider`, `JwtAuthenticationFilter`, `JwtAuthenticationEntryPoint`, `JwtAccessDeniedHandler`, `SecurityConfig`.
+  * Hoàn thiện xác thực phi trạng thái (Stateless), xoay vòng Refresh Token (Token Rotation) chống Replay Attack, hỗ trợ phòng thủ thu hồi toàn bộ token khi phát hiện token cũ bị tái sử dụng.
+  * Phân quyền Resource-Based Authorization theo từng Budget (`OWNER`, `EDITOR`, `VIEWER`) bằng component `BudgetSecurity` kết hợp biểu thức SpEL trong `@PreAuthorize`.
+  * **Xóa bỏ hoàn toàn việc truyền `userId` qua query param**: Thay thế triệt để bằng `@AuthenticationPrincipal UserPrincipal` và `SecurityUtils.getCurrentUserId()`.
+  * Bổ sung endpoint lấy thông tin cá nhân hiện tại `GET /api/v1/users/me`.
+  * Bổ sung 25 Unit Tests mới cho tầng bảo mật và xác thực (`JwtTokenProviderTest`, `BudgetSecurityTest`, `AuthServiceTest`, `AuthControllerTest`), nâng tổng số test lên 37/37 tests passed 100%.
+  * Tạo tài liệu đối soát [`KIEM_TRA_GIAI_DOAN_5.md`](KIEM_TRA_GIAI_DOAN_5.md).
 
 ---
 
@@ -95,17 +137,12 @@
 - [x] **Giai đoạn 1**: Thiết kế Cơ sở dữ liệu & Entity Model
 - [x] **Giai đoạn 2**: Tầng Repository & Service Logic (JPA Nâng cao, Fix N+1, Atomic Transactions)
 - [x] **Giai đoạn 3**: Chuẩn hóa lớp REST API, DTO & MapStruct
-- [ ] **Giai đoạn 4: Global Exception Handling (BƯỚC TIẾP THEO CẦN LÀM)**
-  * Xây dựng `ErrorCode` enum.
-  * Tạo Custom Domain Exceptions (`ResourceNotFoundException`, `BadRequestException`, `ConflictException`, `ForbiddenException`).
-  * Xây dựng `GlobalExceptionHandler` với `@RestControllerAdvice` bắt các lỗi:
-    * `MethodArgumentNotValidException` ➜ Trả về chi tiết lỗi từng trường (`fieldName: errorMessage`).
-    * `ResourceNotFoundException` / `EntityNotFoundException` ➜ HTTP 404.
-    * `IllegalArgumentException` / `IllegalStateException` ➜ HTTP 400.
-    * `Exception` (lỗi không xác định) ➜ HTTP 500 kèm log SLF4J an toàn.
-  * Trả về đồng nhất qua `ApiResponse.error(...)`.
-- [ ] **Giai đoạn 5: Spring Security 6 & JWT Authentication** (Đăng ký, Đăng nhập thường, Access/Refresh Token rotation, phân quyền Resource-based theo từng Budget).
-- [ ] **Giai đoạn 6: Tích hợp OAuth2 Login** (Google Login, map User và tái sử dụng JWT pipeline của GĐ 5).
+- [x] **Giai đoạn 4**: Global Exception Handling (`@RestControllerAdvice`, `ErrorCode`, Domain Exceptions, Validation Error Mapping)
+- [x] **Giai đoạn 5**: Spring Security 6 & JWT Authentication (Stateless, Token Rotation, Resource-Based RBAC BudgetSecurity)
+- [ ] **Giai đoạn 6: Tích hợp OAuth2 Login (BƯỚC TIẾP THEO CẦN LÀM)**
+  * Cấu hình Google OAuth2 Client trong `application.properties`.
+  * Custom `OAuth2UserService` để map tài khoản Google vào bảng `users`.
+  * Tích hợp `OAuth2AuthenticationSuccessHandler` để sinh cặp Access Token / Refresh Token trả về cho client.
 - [ ] **Giai đoạn 7: Redis Caching & Rate Limiting** (Cache-Aside cho Tags/Summary, Token Blacklist cho logout tức thì, Rate Limiting chống spam).
 - [ ] **Giai đoạn 8: Tích hợp Spring Mail** (Gửi link mời tham gia qua `inviteToken`, gửi mã Reset Password lưu ở Redis có TTL 5 phút).
 - [ ] **Giai đoạn 9: OpenAPI / Swagger UI** (Tích hợp SpringDoc OpenAPI 3, giao diện `swagger-ui.html` có Bearer Auth).
@@ -121,6 +158,6 @@ Khi bạn mở một phiên chat mới (New Chat), hãy copy & paste câu lệnh
 
 ```text
 Đọc 2 file @README.md và @TONG_KET_CAC_GIAI_DOAN.md để nắm context dự án SharedBudgetManagement. 
-Hiện tại đã hoàn thành 100% Giai đoạn 1, 2, 3 và hệ thống compile/test hoàn toàn không có lỗi.
-Bây giờ hãy bắt đầu triển khai GIAI ĐOẠN 4: Global Exception Handling cho tôi.
+Hiện tại đã hoàn thành 100% Giai đoạn 1, 2, 3, 4, 5 và hệ thống compile/test hoàn toàn không có lỗi (37/37 tests passed).
+Bây giờ hãy bắt đầu triển khai GIAI ĐOẠN 6: Tích hợp OAuth2 Login (Google Login) cho tôi.
 ```

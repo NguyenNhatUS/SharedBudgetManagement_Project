@@ -334,6 +334,47 @@ curl -X GET "http://localhost:8080/api/v1/budgets/1/transactions/summary"
 
 ---
 
+### 5. Get Paginated & Sorted Transactions
+Fetches budget transactions with standardized pagination, sorting metadata, and filtering.
+
+```bash
+curl -X GET "http://localhost:8080/api/v1/budgets/1/transactions?page=0&size=10&sort=transactionDate,desc"
+```
+**Sample Response (`PageResponse<T>` wrapped in `ApiResponse<T>`):**
+```json
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "content": [
+      {
+        "id": 1,
+        "type": "EXPENSE",
+        "amount": 250000,
+        "description": "Supermarket groceries",
+        "transactionDate": "2026-09-15",
+        "tags": [
+          { "id": 1, "name": "Food" },
+          { "id": 2, "name": "Living" }
+        ]
+      }
+    ],
+    "page": 0,
+    "size": 10,
+    "totalElements": 45,
+    "totalPages": 5,
+    "first": true,
+    "last": false,
+    "empty": false,
+    "sortBy": "transactionDate",
+    "sortDirection": "DESC"
+  },
+  "timestamp": "2026-09-14T20:10:00"
+}
+```
+
+---
+
 > ℹ️ *Interactive OpenAPI/Swagger documentation and full contract schemas will be added in upcoming phases.*
 
 ---
@@ -343,8 +384,8 @@ curl -X GET "http://localhost:8080/api/v1/budgets/1/transactions/summary"
 - [x] **Phase 1: Database & Entity Design** — Tables, intermediate entities, relationships, constraints, and enums.
 - [x] **Phase 2: Base CRUD & Advanced JPA** — Repositories, pagination/sorting, `@EntityGraph` anti-N+1 loading, atomic service transactions.
 - [x] **Phase 3: REST API Layer & DTO Standardization** — MapStruct mappers, `ApiResponse<T>` / `PageResponse<T>`, request validations, versioned controllers.
-- [ ] **Phase 4: Global Exception Handling** — `@RestControllerAdvice`, domain error hierarchy, and structured error responses.
-- [ ] **Phase 5: Core Security & JWT Authentication** — Spring Security 6, login/register, JWT access/refresh token rotation, Resource-Based Authorization (`OWNER`, `EDITOR`, `VIEWER`).
+- [x] **Phase 4: Global Exception Handling** — `@RestControllerAdvice`, `ErrorCode` enum, domain exception hierarchy, and Bean Validation error mapping.
+- [x] **Phase 5: Core Security & JWT Authentication** — Spring Security 6, login/register, JWT access/refresh token rotation, Resource-Based Authorization (`OWNER`, `EDITOR`, `VIEWER`).
 - [ ] **Phase 6: OAuth2 Social Login Integration** — Add Google OAuth2 Login as an additional authentication provider, reusing the JWT issuance pipeline.
 - [ ] **Phase 7: Redis Caching & Rate Limiting** — Cache-Aside for tags/summaries, token blacklisting for instant logout, sliding-window rate limiting.
 - [ ] **Phase 8: Spring Mail Integration** — Asynchronous email delivery for budget invitations (`inviteToken`), password reset (TTL via Redis), and spending alerts.
@@ -357,5 +398,9 @@ curl -X GET "http://localhost:8080/api/v1/budgets/1/transactions/summary"
 
 ## 📚 Supplementary Documentation
 
+* **[SPRING_SECURITY_JWT_CHI_TIET.md](SPRING_SECURITY_JWT_CHI_TIET.md)**: Cẩm nang toàn diện lý thuyết & thực hành Spring Security 6, Stateless JWT, Token Rotation, Defensive Revocation & Resource-Based Authorization.
+* **[HUONG_DAN_REVIEW_CODEBASE.md](HUONG_DAN_REVIEW_CODEBASE.md)**: Hướng dẫn chi tiết thứ tự từng bước và checklist để review toàn bộ codebase 9 tầng kiến trúc của dự án.
+* **[KIEM_TRA_GIAI_DOAN_5.md](KIEM_TRA_GIAI_DOAN_5.md)**: Verification guide, Resource-Based RBAC matrix, and cURL test scenarios for Spring Security 6 & JWT.
+* **[KIEM_TRA_GIAI_DOAN_4.md](KIEM_TRA_GIAI_DOAN_4.md)**: Verification guide, Before-vs-After comparison, and cURL test commands for Global Exception Handling.
 * **[TONG_KET_CAC_GIAI_DOAN.md](TONG_KET_CAC_GIAI_DOAN.md)**: Detailed phase-by-phase Vietnamese architectural summary, recent bug fixes, and development context.
 * **[BudgetShare-Project.md](BudgetShare-Project.md)**: Original project proposal and requirements specification.
