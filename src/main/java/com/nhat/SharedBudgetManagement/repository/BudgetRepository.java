@@ -1,9 +1,12 @@
 package com.nhat.SharedBudgetManagement.repository;
 
 import com.nhat.SharedBudgetManagement.entity.Budget;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
@@ -26,9 +29,17 @@ public interface BudgetRepository extends JpaRepository<Budget, Long> {
     Optional<Budget> findByIdFetchMembers(Long id);
 
 
-     // Tìm tất cả Budget mà user đang tham gia (status = ACCEPTED).
     @Query("SELECT b FROM Budget b " +
            "JOIN b.members m " +
            "WHERE m.user.id = :userId AND m.status = 'ACCEPTED'")
     List<Budget> findAllByMemberUserId(Long userId);
+
+    @Query(value = "SELECT b FROM Budget b " +
+                   "JOIN b.members m " +
+                   "WHERE m.user.id = :userId AND m.status = 'ACCEPTED'",
+           countQuery = "SELECT count(b) FROM Budget b " +
+                        "JOIN b.members m " +
+                        "WHERE m.user.id = :userId AND m.status = 'ACCEPTED'")
+    Page<Budget> findAllByMemberUserId(@Param("userId") Long userId, Pageable pageable);
 }
+

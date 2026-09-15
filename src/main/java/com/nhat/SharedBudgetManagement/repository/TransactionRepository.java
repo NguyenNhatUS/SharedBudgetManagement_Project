@@ -13,29 +13,17 @@ import java.util.List;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
-    // ====================== Pagination & Sorting ======================
-
-    /**
-     * Danh sách giao dịch theo Budget, có phân trang & sắp xếp.
-     * FE gửi: ?page=0&size=20&sort=transactionDate,desc
-     */
     Page<Transaction> findAllByBudgetId(Long budgetId, Pageable pageable);
 
-    /**
-     * Lọc theo loại giao dịch (INCOME/EXPENSE) + pagination.
-     */
+
     Page<Transaction> findAllByBudgetIdAndType(Long budgetId, TransactionType type, Pageable pageable);
 
-    /**
-     * Lọc theo khoảng thời gian + pagination.
-     */
+
     Page<Transaction> findAllByBudgetIdAndTransactionDateBetween(
             Long budgetId, LocalDate startDate, LocalDate endDate, Pageable pageable);
 
 
-    /**
-     * Load danh sách giao dịch kèm tags (fix N+1 khi hiển thị danh sách).
-     */
+
     @Query("SELECT DISTINCT t FROM Transaction t " +
            "LEFT JOIN FETCH t.transactionTags tt " +
            "LEFT JOIN FETCH tt.tag " +

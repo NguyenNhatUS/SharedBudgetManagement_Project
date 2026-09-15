@@ -17,9 +17,8 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
 
     void deleteAllByUserId(Long userId);
 
-    /**
-     * Thu hồi tất cả refresh token của user (logout all devices).
-     */
+
+    // logout all devices
     @Modifying
     @Query("UPDATE RefreshToken rt SET rt.revoked = true WHERE rt.user.id = :userId")
     void revokeAllByUserId(Long userId);
