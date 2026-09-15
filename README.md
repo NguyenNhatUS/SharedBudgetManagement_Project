@@ -254,93 +254,275 @@ src/main/java/com/nhat/SharedBudgetManagement/
 
 ---
 
-## 📡 API Documentation & Quick Test Samples
+## 📡 End-to-End API Testing Guide with Postman / cURL
 
-> 💡 **Note**: Base URL: `http://localhost:8080`. Until Phase 5 (Spring Security & JWT) is integrated, `userId` is supplied as a query parameter for demonstration.
-
-Below are the **4 most essential API workflows** to test the core features:
-
-### 1. Create a Shared Budget
-Creates a new budget and atomically assigns the calling user as the `OWNER`.
-
-```bash
-curl -X POST "http://localhost:8080/api/v1/budgets?userId=1" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Housemates 2026",
-    "description": "Monthly apartment sharing",
-    "currency": "VND"
-  }'
-```
+> 💡 **End-to-End Testing Workflow**:
+> The workflow below is sequentially organized according to the actual user journey in the application:
+> **1. Register** ➔ **2. Login (Local Login or Google OAuth2 Social Login to obtain JWT)** ➔ **3. Create Budget** ➔ **4. Create Tags & Record 3 Transactions** ➔ **5. Get Paginated & Sorted Transactions** ➔ **6. Refresh Token (Token Rotation)** ➔ **7. Get Financial Summary & Filter Expenses (Paginated & Sorted)** ➔ **8. Logout & Revoke Token**.
 
 ---
 
-### 2. Invite a Member & Accept via One-Time Token
-**Step A: Invite a member (as OWNER)**
-```bash
-curl -X POST "http://localhost:8080/api/v1/budgets/1/members/invite" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "roommate@example.com",
-    "role": "EDITOR"
-  }'
-```
-*The response returns an `inviteToken` (e.g. `c4a8d09b-2b23-4412-b918-a6d59bdf4321`) with status `PENDING`.*
-
-**Step B: Invited user accepts the invite**
-```bash
-curl -X POST "http://localhost:8080/api/v1/budgets/members/accept?token=c4a8d09b-2b23-4412-b918-a6d59bdf4321"
-```
-*The status changes to `ACCEPTED`, `joinedAt` is recorded, and the token is automatically wiped.*
+### ⚙️ Postman Environment Setup
+To streamline running requests sequentially without manual copying, create an Environment in Postman with the following variables:
+* `baseUrl`: `http://localhost:8080`
+* `accessToken`: *(Automatically updated after Login / Token Refresh)*
+* `refreshToken`: *(Automatically updated after Login / Token Refresh)*
+* `budgetId`: `1`
 
 ---
 
-### 3. Record an Expense with Tags
-Creates a transaction and associates it with category tags in a single database transaction.
+### 🟢 Step 1: Register a New User
+Registers a local user account with a BCrypt-hashed password.
 
-```bash
-curl -X POST "http://localhost:8080/api/v1/budgets/1/transactions?userId=1" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "type": "EXPENSE",
-    "amount": 250000,
-    "description": "Supermarket groceries",
-    "note": "Purchased milk, eggs, vegetables",
-    "transactionDate": "2026-09-15",
-    "tagIds": [1, 2]
-  }'
-```
-
----
-
-### 4. Get Financial Summary for Dashboard
-Aggregates total income and total expense for the budget.
-
-```bash
-curl -X GET "http://localhost:8080/api/v1/budgets/1/transactions/summary"
-```
-**Sample Response:**
+* **Method**: `POST`
+* **URL**: `{{baseUrl}}/api/v1/auth/register`
+* **Headers**: `Content-Type: application/json`
+* **Body (JSON)**:
 ```json
 {
-  "status": 200,
-  "message": "Success",
+  "fullName": "Nguyen Nhat",
+  "email": "nhat@example.com",
+  "password": "Password123@"
+}
+```
+
+* **cURL**:
+```bash
+curl -X POST "http://localhost:8080/api/v1/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{"fullName":"Nguyen Nhat","email":"nhat@example.com","password":"Password123@"}'
+```
+
+* **Sample Response (201 Created)**:
+```json
+{
+  "status": 201,
+  "message": "User registered successfully",
   "data": {
-    "EXPENSE": 250000,
-    "INCOME": 5000000
+    "id": 1,
+    "email": "nhat@example.com",
+    "fullName": "Nguyen Nhat",
+    "avatarUrl": null,
+    "role": "ROLE_USER",
+    "authProvider": "LOCAL"
   },
-  "timestamp": "2026-09-13T11:25:00"
+  "timestamp": "2026-09-15T22:15:00"
 }
 ```
 
 ---
 
-### 5. Get Paginated & Sorted Transactions
-Fetches budget transactions with standardized pagination, sorting metadata, and filtering.
+### 🟢 Step 2: Authenticate & Obtain Tokens (Login)
+You can choose **either of the two authentication methods** below to obtain a secure token pair: **Access Token** (expires in 15 minutes) and **Refresh Token** (expires in 7 days):
 
-```bash
-curl -X GET "http://localhost:8080/api/v1/budgets/1/transactions?page=0&size=10&sort=transactionDate,desc"
+#### Option 2A: Email & Password (Local Login)
+* **Method**: `POST`
+* **URL**: `{{baseUrl}}/api/v1/auth/login`
+* **Headers**: `Content-Type: application/json`
+* **Body (JSON)**:
+```json
+{
+  "email": "nhat@example.com",
+  "password": "Password123@"
+}
 ```
-**Sample Response (`PageResponse<T>` wrapped in `ApiResponse<T>`):**
+
+* **cURL**:
+```bash
+curl -X POST "http://localhost:8080/api/v1/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"nhat@example.com","password":"Password123@"}'
+```
+
+* **Sample Response (200 OK)**:
+```json
+{
+  "status": 200,
+  "message": "Login successful",
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJuaGF0QGV4YW1wbGUuY29tIiwicm9sZSI6IlJPTEVfVVNFUiIsImlhdCI6MTc4OTU0NzIwMCwiZXhwIjoxNzg5NTQ4MTAwfQ...",
+    "refreshToken": "4a73e6cf-3dc4-4d89-a9eb-83d3e64f8910",
+    "tokenType": "Bearer",
+    "expiresIn": 900
+  },
+  "timestamp": "2026-09-15T22:15:05"
+}
+```
+
+> 💡 **Postman Tip**: Add this snippet to the **Tests** tab of this request to automatically set the environment variables:
+> ```javascript
+> var jsonData = pm.response.json();
+> pm.environment.set("accessToken", jsonData.data.accessToken);
+> pm.environment.set("refreshToken", jsonData.data.refreshToken);
+> ```
+
+#### Option 2B: Google Social Login (OAuth2 / OpenID Connect)
+For passwordless social authentication via Google's Authorization Code Flow:
+
+1. **Initiate Login (Browser)**: Navigate in your browser to:
+   ```text
+   http://localhost:8080/oauth2/authorization/google
+   ```
+2. **Grant Consent (Google Consent Screen)**: Sign in with your Google account and approve permissions (email and profile).
+3. **Backend Processing**:
+   - Google redirects back to `http://localhost:8080/login/oauth2/code/google?code=...`
+   - `CustomOAuth2UserService` maps the profile, provisions a new user or links an existing account (`authProvider = GOOGLE`).
+   - `OAuth2AuthenticationSuccessHandler` issues system JWT `accessToken` and `refreshToken`, then redirects the browser to the frontend callback URL:
+     ```text
+     http://localhost:3000/oauth2/callback?token=eyJhbGciOi...&refreshToken=9f82d1ab...
+     ```
+4. **Use Tokens in Postman**: Copy `token` and `refreshToken` from the browser address bar into Postman's `{{accessToken}}` and `{{refreshToken}}` environment variables to proceed seamlessly!
+
+---
+
+### 🟢 Step 3: Create a Shared Budget
+Creates a new budget. The authenticated user is atomically assigned the **OWNER** role in `budget_members`. From this step onward, all requests require the `Authorization: Bearer {{accessToken}}` header.
+
+* **Method**: `POST`
+* **URL**: `{{baseUrl}}/api/v1/budgets`
+* **Headers**:
+  * `Content-Type: application/json`
+  * `Authorization: Bearer {{accessToken}}`
+* **Body (JSON)**:
+```json
+{
+  "name": "Family Budget 2026",
+  "description": "Monthly household living expenses",
+  "currency": "VND"
+}
+```
+
+* **cURL**:
+```bash
+curl -X POST "http://localhost:8080/api/v1/budgets" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -d '{"name":"Family Budget 2026","description":"Monthly household living expenses","currency":"VND"}'
+```
+
+* **Sample Response (201 Created)**:
+```json
+{
+  "status": 201,
+  "message": "Budget created successfully",
+  "data": {
+    "id": 1,
+    "name": "Family Budget 2026",
+    "description": "Monthly household living expenses",
+    "currency": "VND",
+    "createdAt": "2026-09-15T22:15:10"
+  },
+  "timestamp": "2026-09-15T22:15:10"
+}
+```
+*(Sets `budgetId = 1` for subsequent steps)*.
+
+---
+
+### 🟢 Step 4: Create Category Tags & Record 3 Transactions
+
+#### 4.1. Create 2 Sample Tags
+* **Tag 1 (Food & Dining)**:
+  * `POST {{baseUrl}}/api/v1/tags`
+  * Headers: `Authorization: Bearer {{accessToken}}`
+  * Body: `{"name": "Food & Dining"}` ➔ Result: `id = 1`.
+* **Tag 2 (Rent & Utilities)**:
+  * `POST {{baseUrl}}/api/v1/tags`
+  * Headers: `Authorization: Bearer {{accessToken}}`
+  * Body: `{"name": "Rent & Utilities"}` ➔ Result: `id = 2`.
+
+#### 4.2. Transaction 1: Record INCOME (Monthly Salary)
+* **Method**: `POST`
+* **URL**: `{{baseUrl}}/api/v1/budgets/1/transactions`
+* **Headers**: `Authorization: Bearer {{accessToken}}`
+* **Body (JSON)**:
+```json
+{
+  "type": "INCOME",
+  "amount": 25000000,
+  "description": "September 2026 Salary",
+  "note": "Company direct bank transfer",
+  "transactionDate": "2026-09-10",
+  "tagIds": []
+}
+```
+
+#### 4.3. Transaction 2: Record EXPENSE (Groceries - Associated with Tag 1)
+* **Method**: `POST`
+* **URL**: `{{baseUrl}}/api/v1/budgets/1/transactions`
+* **Headers**: `Authorization: Bearer {{accessToken}}`
+* **Body (JSON)**:
+```json
+{
+  "type": "EXPENSE",
+  "amount": 1250000,
+  "description": "Supermarket grocery shopping",
+  "note": "Fresh meat, vegetables, and fruit for the week",
+  "transactionDate": "2026-09-12",
+  "tagIds": [1]
+}
+```
+
+#### 4.4. Transaction 3: Record EXPENSE (Utilities - Associated with Tag 2)
+* **Method**: `POST`
+* **URL**: `{{baseUrl}}/api/v1/budgets/1/transactions`
+* **Headers**: `Authorization: Bearer {{accessToken}}`
+* **Body (JSON)**:
+```json
+{
+  "type": "EXPENSE",
+  "amount": 1800000,
+  "description": "Electricity & Water Bill",
+  "note": "September utility bill payment",
+  "transactionDate": "2026-09-14",
+  "tagIds": [2]
+}
+```
+
+* **Sample Response (201 Created)**:
+```json
+{
+  "status": 201,
+  "message": "Transaction created successfully",
+  "data": {
+    "id": 3,
+    "type": "EXPENSE",
+    "amount": 1800000,
+    "description": "Electricity & Water Bill",
+    "note": "September utility bill payment",
+    "transactionDate": "2026-09-14",
+    "createdBy": {
+      "id": 1,
+      "fullName": "Nguyen Nhat",
+      "email": "nhat@example.com"
+    },
+    "tags": [
+      { "id": 2, "name": "Rent & Utilities" }
+    ],
+    "createdAt": "2026-09-15T22:15:30"
+  },
+  "timestamp": "2026-09-15T22:15:30"
+}
+```
+
+---
+
+### 🟢 Step 5: Get Paginated & Sorted Transactions
+Retrieves all transactions belonging to `budgetId = 1`.
+
+> 🔒 **Resource-Based RBAC Enforcement**: Access is granted only if the caller is an active budget member (`OWNER`, `EDITOR`, or `VIEWER`) through `@budgetSecurity.canView(#budgetId)`. User identity is automatically resolved from the JWT `UserPrincipal`—**no `userId` parameter needed**.
+
+* **Method**: `GET`
+* **URL**: `{{baseUrl}}/api/v1/budgets/1/transactions?page=0&size=10&sort=transactionDate,desc`
+* **Headers**: `Authorization: Bearer {{accessToken}}`
+
+* **cURL**:
+```bash
+curl -X GET "http://localhost:8080/api/v1/budgets/1/transactions?page=0&size=10&sort=transactionDate,desc" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+* **Sample Response (200 OK with `PageResponse<T>`)**:
 ```json
 {
   "status": 200,
@@ -348,34 +530,205 @@ curl -X GET "http://localhost:8080/api/v1/budgets/1/transactions?page=0&size=10&
   "data": {
     "content": [
       {
-        "id": 1,
+        "id": 3,
         "type": "EXPENSE",
-        "amount": 250000,
-        "description": "Supermarket groceries",
-        "transactionDate": "2026-09-15",
-        "tags": [
-          { "id": 1, "name": "Food" },
-          { "id": 2, "name": "Living" }
-        ]
+        "amount": 1800000,
+        "description": "Electricity & Water Bill",
+        "transactionDate": "2026-09-14",
+        "tags": [{ "id": 2, "name": "Rent & Utilities" }]
+      },
+      {
+        "id": 2,
+        "type": "EXPENSE",
+        "amount": 1250000,
+        "description": "Supermarket grocery shopping",
+        "transactionDate": "2026-09-12",
+        "tags": [{ "id": 1, "name": "Food & Dining" }]
+      },
+      {
+        "id": 1,
+        "type": "INCOME",
+        "amount": 25000000,
+        "description": "September 2026 Salary",
+        "transactionDate": "2026-09-10",
+        "tags": []
       }
     ],
     "page": 0,
     "size": 10,
-    "totalElements": 45,
-    "totalPages": 5,
+    "totalElements": 3,
+    "totalPages": 1,
     "first": true,
-    "last": false,
+    "last": true,
     "empty": false,
     "sortBy": "transactionDate",
     "sortDirection": "DESC"
   },
-  "timestamp": "2026-09-14T20:10:00"
+  "timestamp": "2026-09-15T22:15:35"
 }
 ```
 
 ---
 
-> ℹ️ *Interactive OpenAPI/Swagger documentation and full contract schemas will be added in upcoming phases.*
+### 🟢 Step 6: Refresh Token (Token Rotation)
+When the 15-minute Access Token nears or reaches expiration, the client exchanges the Refresh Token for a fresh token pair without requiring credentials again.
+
+> 🛡️ **Defensive Token Rotation**:
+> 1. The previous Refresh Token is immediately revoked (`revoked = true`).
+> 2. A brand-new `accessToken` and a fresh `refreshToken` are issued.
+> 3. If an attacker attempts to reuse an already-revoked refresh token, the **defensive revocation mechanism** triggers immediately, invalidating all refresh tokens owned by that user and forcing re-authentication.
+
+* **Method**: `POST`
+* **URL**: `{{baseUrl}}/api/v1/auth/refresh-token`
+* **Headers**: `Content-Type: application/json`
+* **Body (JSON)**:
+```json
+{
+  "refreshToken": "{{refreshToken}}"
+}
+```
+
+* **cURL**:
+```bash
+curl -X POST "http://localhost:8080/api/v1/auth/refresh-token" \
+  -H "Content-Type: application/json" \
+  -d '{"refreshToken":"<REFRESH_TOKEN>"}'
+```
+
+* **Sample Response (200 OK)**:
+```json
+{
+  "status": 200,
+  "message": "Token refreshed successfully",
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwibmV3X2FjY2Vzc190b2tlbiI6dHJ1ZX0...",
+    "refreshToken": "9f82d1ab-4c3e-4fa2-9b27-68ef7390a1b2",
+    "tokenType": "Bearer",
+    "expiresIn": 900
+  },
+  "timestamp": "2026-09-15T22:15:40"
+}
+```
+*(Remember to update `accessToken` and `refreshToken` with the new values for subsequent requests)*.
+
+---
+
+### 🟢 Step 7: Get Financial Summary & Filter Expenses (Paginated & Sorted)
+
+#### 7.1. Get Financial Summary
+Calculates aggregate total income and total expense for the budget dashboard:
+* **Method**: `GET`
+* **URL**: `{{baseUrl}}/api/v1/budgets/1/transactions/summary`
+* **Headers**: `Authorization: Bearer {{accessToken}}`
+
+* **cURL**:
+```bash
+curl -X GET "http://localhost:8080/api/v1/budgets/1/transactions/summary" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+* **Sample Response (200 OK)**:
+```json
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "EXPENSE": 3050000.00,
+    "INCOME": 25000000.00
+  },
+  "timestamp": "2026-09-15T22:15:45"
+}
+```
+
+#### 7.2. Filter Expenses with Pagination & Descending Amount Sort
+Demonstrates filtering by transaction type combined with pagination and multi-property sorting:
+* **Method**: `GET`
+* **URL**: `{{baseUrl}}/api/v1/budgets/1/transactions?type=EXPENSE&page=0&size=10&sort=amount,desc`
+* **Headers**: `Authorization: Bearer {{accessToken}}`
+
+* **Sample Response (200 OK)**:
+```json
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "content": [
+      {
+        "id": 3,
+        "type": "EXPENSE",
+        "amount": 1800000.00,
+        "description": "Electricity & Water Bill",
+        "transactionDate": "2026-09-14",
+        "tags": [{ "id": 2, "name": "Rent & Utilities" }]
+      },
+      {
+        "id": 2,
+        "type": "EXPENSE",
+        "amount": 1250000.00,
+        "description": "Supermarket grocery shopping",
+        "transactionDate": "2026-09-12",
+        "tags": [{ "id": 1, "name": "Food & Dining" }]
+      }
+    ],
+    "page": 0,
+    "size": 10,
+    "totalElements": 2,
+    "totalPages": 1,
+    "first": true,
+    "last": true,
+    "empty": false,
+    "sortBy": "amount",
+    "sortDirection": "DESC"
+  },
+  "timestamp": "2026-09-15T22:15:50"
+}
+```
+
+---
+
+### 🟢 Step 8: Logout & Revoke Refresh Token
+Logs out by revoking the Refresh Token in the database. Once revoked, the token cannot be used to generate new access tokens.
+
+* **Method**: `POST`
+* **URL**: `{{baseUrl}}/api/v1/auth/logout`
+* **Headers**:
+  * `Content-Type: application/json`
+  * `Authorization: Bearer {{accessToken}}`
+* **Body (JSON)**:
+```json
+{
+  "refreshToken": "{{refreshToken}}"
+}
+```
+
+* **cURL**:
+```bash
+curl -X POST "http://localhost:8080/api/v1/auth/logout" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -d '{"refreshToken":"<REFRESH_TOKEN>"}'
+```
+
+* **Sample Response (200 OK)**:
+```json
+{
+  "status": 200,
+  "message": "Logged out successfully",
+  "data": null,
+  "timestamp": "2026-09-15T22:15:55"
+}
+```
+
+> 🔒 **Verify Token Invalidation**:
+> If you attempt to reuse the revoked `refreshToken` at `POST /api/v1/auth/refresh-token`, the request is blocked with:
+> ```json
+> {
+>   "status": 401,
+>   "errorCode": "REFRESH_TOKEN_REVOKED",
+>   "message": "Refresh token has been revoked",
+>   "timestamp": "2026-09-15T22:16:00"
+> }
+> ```
 
 ---
 
@@ -386,21 +739,23 @@ curl -X GET "http://localhost:8080/api/v1/budgets/1/transactions?page=0&size=10&
 - [x] **Phase 3: REST API Layer & DTO Standardization** — MapStruct mappers, `ApiResponse<T>` / `PageResponse<T>`, request validations, versioned controllers.
 - [x] **Phase 4: Global Exception Handling** — `@RestControllerAdvice`, `ErrorCode` enum, domain exception hierarchy, and Bean Validation error mapping.
 - [x] **Phase 5: Core Security & JWT Authentication** — Spring Security 6, login/register, JWT access/refresh token rotation, Resource-Based Authorization (`OWNER`, `EDITOR`, `VIEWER`).
-- [ ] **Phase 6: OAuth2 Social Login Integration** — Add Google OAuth2 Login as an additional authentication provider, reusing the JWT issuance pipeline.
+- [x] **Phase 6: OAuth2 Social Login Integration** — Google OAuth2 Login, OpenID Connect, CustomOAuth2UserService, Account Linking, JWT token issuance pipeline.
 - [ ] **Phase 7: Redis Caching & Rate Limiting** — Cache-Aside for tags/summaries, token blacklisting for instant logout, sliding-window rate limiting.
-- [ ] **Phase 8: Spring Mail Integration** — Asynchronous email delivery for budget invitations (`inviteToken`), password reset (TTL via Redis), and spending alerts.
-- [ ] **Phase 9: Interactive OpenAPI / Swagger Documentation** — SpringDoc OpenAPI 3 interactive API playground with Bearer Auth support.
-- [ ] **Phase 10: Automated Testing Suite** — JUnit 5 + Mockito service tests and core flow integration testing.
-- [ ] **Phase 11: Web Frontend Interface** — Modern, responsive UI built with HTML5, Vanilla CSS, and JavaScript (Fetch API).
-- [ ] **Phase 12: Containerization & DevOps** — Multi-stage `Dockerfile`, `docker-compose.yml` (App + MySQL + Redis), and CI/CD pipelines.
+- [ ] **Phase 8: Spring Mail Integration** — Asynchronous email delivery for budget invitations (`inviteToken`) and password reset (TTL via Redis).
+- [ ] **Phase 9: Comprehensive Automated Testing (Service Layer)** — Extensive unit and mock tests with JUnit 5 and Mockito covering all business edge cases.
+- [ ] **Phase 10: Interactive OpenAPI 3 / Swagger Documentation** — SpringDoc OpenAPI 3 interactive API playground with Bearer JWT Auth support.
+- [ ] **Phase 11: Containerization, DevOps & CI/CD Pipelines** — Multi-stage `Dockerfile` (<200MB), `docker-compose.yml` (App + MySQL 8 + Redis), and automated GitHub Actions CI/CD pipelines.
+- [ ] **Phase 12: Message Queue & Event-Driven Architecture (RabbitMQ - Optional Extension)** — Decouple heavy background workloads (asynchronous email dispatch, budget overrun alerts) with Dead Letter Queues (DLQ) and exponential retry policies.
 
 ---
 
 ## 📚 Supplementary Documentation
 
-* **[SPRING_SECURITY_JWT_CHI_TIET.md](SPRING_SECURITY_JWT_CHI_TIET.md)**: Cẩm nang toàn diện lý thuyết & thực hành Spring Security 6, Stateless JWT, Token Rotation, Defensive Revocation & Resource-Based Authorization.
-* **[HUONG_DAN_REVIEW_CODEBASE.md](HUONG_DAN_REVIEW_CODEBASE.md)**: Hướng dẫn chi tiết thứ tự từng bước và checklist để review toàn bộ codebase 9 tầng kiến trúc của dự án.
+* **[OAUTH2_EXPLANATION.md](OAUTH2_EXPLANATION.md)**: Comprehensive guide on OAuth 2.0, OpenID Connect (OIDC), Spring Security OAuth2 client internals, and the Google Login architectural flow.
+* **[KIEM_TRA_GIAI_DOAN_6.md](KIEM_TRA_GIAI_DOAN_6.md)**: Phase 6 verification report, Google Cloud Console credentials setup instructions, and testing scenarios.
+* **[SPRING_SECURITY_JWT_CHI_TIET.md](SPRING_SECURITY_JWT_CHI_TIET.md)**: Deep-dive architectural guide on Spring Security 6, Stateless JWT, Token Rotation, Defensive Revocation & Resource-Based Authorization.
+* **[HUONG_DAN_REVIEW_CODEBASE.md](HUONG_DAN_REVIEW_CODEBASE.md)**: Comprehensive step-by-step checklist to review the entire 9-layer architectural codebase.
 * **[KIEM_TRA_GIAI_DOAN_5.md](KIEM_TRA_GIAI_DOAN_5.md)**: Verification guide, Resource-Based RBAC matrix, and cURL test scenarios for Spring Security 6 & JWT.
 * **[KIEM_TRA_GIAI_DOAN_4.md](KIEM_TRA_GIAI_DOAN_4.md)**: Verification guide, Before-vs-After comparison, and cURL test commands for Global Exception Handling.
-* **[TONG_KET_CAC_GIAI_DOAN.md](TONG_KET_CAC_GIAI_DOAN.md)**: Detailed phase-by-phase Vietnamese architectural summary, recent bug fixes, and development context.
+* **[TONG_KET_CAC_GIAI_DOAN.md](TONG_KET_CAC_GIAI_DOAN.md)**: Detailed phase-by-phase architectural summary, bug fix records, and engineering progression.
 * **[BudgetShare-Project.md](BudgetShare-Project.md)**: Original project proposal and requirements specification.
