@@ -751,6 +751,7 @@ curl -X POST "http://localhost:8080/api/v1/auth/logout" \
 
 ## 📚 Supplementary Documentation
 
+* **[HUONG_DAN_UNIT_TEST_MOCKITO.md](HUONG_DAN_UNIT_TEST_MOCKITO.md)**: Complete practical handbook on Unit Testing with JUnit 5 & Mockito, containing layer-by-layer templates for all project services, controllers, and security components.
 * **[OAUTH2_EXPLANATION.md](OAUTH2_EXPLANATION.md)**: Comprehensive guide on OAuth 2.0, OpenID Connect (OIDC), Spring Security OAuth2 client internals, and the Google Login architectural flow.
 * **[KIEM_TRA_GIAI_DOAN_6.md](KIEM_TRA_GIAI_DOAN_6.md)**: Phase 6 verification report, Google Cloud Console credentials setup instructions, and testing scenarios.
 * **[SPRING_SECURITY_JWT_CHI_TIET.md](SPRING_SECURITY_JWT_CHI_TIET.md)**: Deep-dive architectural guide on Spring Security 6, Stateless JWT, Token Rotation, Defensive Revocation & Resource-Based Authorization.
