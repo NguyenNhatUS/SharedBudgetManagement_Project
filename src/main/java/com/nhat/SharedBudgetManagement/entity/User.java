@@ -1,5 +1,6 @@
 package com.nhat.SharedBudgetManagement.entity;
 
+import com.nhat.SharedBudgetManagement.entity.enums.AuthProvider;
 import com.nhat.SharedBudgetManagement.entity.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
@@ -26,7 +27,7 @@ public class User {
     @Column(nullable = false, length = 100)
     private String email;
 
-    @Column(nullable = false, length = 255)
+    @Column(length = 255)
     private String password;
 
     @Column(nullable = false, length = 50)
@@ -39,6 +40,14 @@ public class User {
     @Column(nullable = false, length = 20)
     @Builder.Default
     private UserRole role = UserRole.ROLE_USER;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private AuthProvider authProvider = AuthProvider.LOCAL;
+
+    @Column(length = 255)
+    private String providerId;
 
 
     @Column(nullable = false, updatable = false)

@@ -1,5 +1,6 @@
 package com.nhat.SharedBudgetManagement.dto.response;
 
+import com.nhat.SharedBudgetManagement.entity.enums.AuthProvider;
 import com.nhat.SharedBudgetManagement.entity.enums.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,5 +18,6 @@ public class UserResponse {
     private String fullName;
     private String avatarUrl;
     private UserRole role;
+    private AuthProvider authProvider;
     private LocalDateTime createdAt;
 }

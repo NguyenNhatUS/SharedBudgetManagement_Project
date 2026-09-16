@@ -43,7 +43,11 @@ public enum ErrorCode {
     RESOURCE_ALREADY_EXISTS(1018, "Resource already exists", HttpStatus.CONFLICT),
     TAG_ALREADY_EXISTS(1019, "Tag name already exists", HttpStatus.CONFLICT),
     MEMBER_ALREADY_EXISTS(1020, "User is already a member of this budget", HttpStatus.CONFLICT),
-    EMAIL_ALREADY_EXISTS(1026, "Email is already registered", HttpStatus.CONFLICT);
+    EMAIL_ALREADY_EXISTS(1026, "Email is already registered", HttpStatus.CONFLICT),
+
+    // OAuth2
+    OAUTH2_AUTHENTICATION_FAILED(1027, "OAuth2 authentication failed", HttpStatus.UNAUTHORIZED),
+    OAUTH2_EMAIL_NOT_PROVIDED(1028, "Email not provided by OAuth2 provider", HttpStatus.BAD_REQUEST);
 
     private final int code;
     private final String message;

@@ -5,12 +5,15 @@ import com.nhat.SharedBudgetManagement.entity.BudgetMember;
 import com.nhat.SharedBudgetManagement.entity.User;
 import com.nhat.SharedBudgetManagement.entity.enums.BudgetRole;
 import com.nhat.SharedBudgetManagement.entity.enums.MemberStatus;
+import com.nhat.SharedBudgetManagement.exception.ErrorCode;
+import com.nhat.SharedBudgetManagement.exception.ResourceNotFoundException;
 import com.nhat.SharedBudgetManagement.repository.BudgetMemberRepository;
 import com.nhat.SharedBudgetManagement.repository.BudgetRepository;
 import com.nhat.SharedBudgetManagement.repository.UserRepository;
 import com.nhat.SharedBudgetManagement.service.BudgetService;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
@@ -29,7 +32,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional
     public Budget createBudget(Long userId, String name, String description, String currency) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND, "User not found with id: " + userId));
 
 
         Budget budget = Budget.builder()
@@ -57,7 +60,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional(readOnly = true)
     public Budget getBudgetById(Long budgetId) {
         return budgetRepository.findById(budgetId)
-                .orElseThrow(() -> new EntityNotFoundException("Budget not found with id: " + budgetId));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BUDGET_NOT_FOUND, "Budget not found with id: " + budgetId));
     }
 
 
@@ -65,13 +68,19 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional(readOnly = true)
     public Budget getBudgetWithMembers(Long budgetId) {
         return budgetRepository.findWithMembersById(budgetId)
-                .orElseThrow(() -> new EntityNotFoundException("Budget not found with id: " + budgetId));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BUDGET_NOT_FOUND, "Budget not found with id: " + budgetId));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Budget> getAllBudgetsByUserId(Long userId) {
         return budgetRepository.findAllByMemberUserId(userId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Budget> getAllBudgetsByUserId(Long userId, Pageable pageable) {
+        return budgetRepository.findAllByMemberUserId(userId, pageable);
     }
 
     @Override

@@ -14,32 +14,28 @@ import java.util.Optional;
 @Repository
 public interface BudgetRepository extends JpaRepository<Budget, Long> {
 
-    @EntityGraph(attributePaths = {"members", "members.user"})
-    Optional<Budget> findWithMembersById(Long id);
+       @EntityGraph(attributePaths = { "members", "members.user" })
+       Optional<Budget> findWithMembersById(Long id);
 
+       @EntityGraph(attributePaths = { "transactions", "transactions.createdBy" })
+       Optional<Budget> findWithTransactionsById(Long id);
 
-    @EntityGraph(attributePaths = {"transactions", "transactions.createdBy"})
-    Optional<Budget> findWithTransactionsById(Long id);
+       @Query("SELECT b FROM Budget b " +
+                     "JOIN FETCH b.members m " +
+                     "JOIN FETCH m.user " +
+                     "WHERE b.id = :id")
+       Optional<Budget> findByIdFetchMembers(Long id);
 
+       @Query("SELECT b FROM Budget b " +
+                     "JOIN b.members m " +
+                     "WHERE m.user.id = :userId AND m.status = 'ACCEPTED'")
+       List<Budget> findAllByMemberUserId(Long userId);
 
-    @Query("SELECT b FROM Budget b " +
-           "JOIN FETCH b.members m " +
-           "JOIN FETCH m.user " +
-           "WHERE b.id = :id")
-    Optional<Budget> findByIdFetchMembers(Long id);
-
-
-    @Query("SELECT b FROM Budget b " +
-           "JOIN b.members m " +
-           "WHERE m.user.id = :userId AND m.status = 'ACCEPTED'")
-    List<Budget> findAllByMemberUserId(Long userId);
-
-    @Query(value = "SELECT b FROM Budget b " +
-                   "JOIN b.members m " +
-                   "WHERE m.user.id = :userId AND m.status = 'ACCEPTED'",
-           countQuery = "SELECT count(b) FROM Budget b " +
-                        "JOIN b.members m " +
-                        "WHERE m.user.id = :userId AND m.status = 'ACCEPTED'")
-    Page<Budget> findAllByMemberUserId(@Param("userId") Long userId, Pageable pageable);
+       @Query(value = "SELECT b FROM Budget b " +
+                     "JOIN b.members m " +
+                     "WHERE m.user.id = :userId AND m.status = 'ACCEPTED'", countQuery = "SELECT count(b) FROM Budget b "
+                                   +
+                                   "JOIN b.members m " +
+                                   "WHERE m.user.id = :userId AND m.status = 'ACCEPTED'")
+       Page<Budget> findAllByMemberUserId(@Param("userId") Long userId, Pageable pageable);
 }
-

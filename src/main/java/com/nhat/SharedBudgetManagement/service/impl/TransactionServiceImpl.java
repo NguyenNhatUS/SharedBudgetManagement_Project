@@ -3,15 +3,16 @@ package com.nhat.SharedBudgetManagement.service.impl;
 import com.nhat.SharedBudgetManagement.entity.*;
 import com.nhat.SharedBudgetManagement.entity.enums.MemberStatus;
 import com.nhat.SharedBudgetManagement.entity.enums.TransactionType;
+import com.nhat.SharedBudgetManagement.exception.ErrorCode;
+import com.nhat.SharedBudgetManagement.exception.ForbiddenException;
+import com.nhat.SharedBudgetManagement.exception.ResourceNotFoundException;
 import com.nhat.SharedBudgetManagement.repository.*;
 import com.nhat.SharedBudgetManagement.service.TransactionService;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -28,28 +29,23 @@ public class TransactionServiceImpl implements TransactionService {
     private final TagRepository tagRepository;
     private final TransactionTagRepository transactionTagRepository;
 
-    /**
-     * Tạo Transaction + gắn tags — tất cả trong 1 transaction.
-     * Rollback nếu bất kỳ bước nào fail (ví dụ: tag không tồn tại).
-     */
     @Override
     @Transactional
     public Transaction createTransaction(Long budgetId, Long userId, TransactionType type,
-                                         BigDecimal amount, String description, String note,
-                                         LocalDate transactionDate, List<Long> tagIds) {
-        // 1. Kiểm tra Budget tồn tại
+            BigDecimal amount, String description, String note,
+            LocalDate transactionDate, List<Long> tagIds) {
         Budget budget = budgetRepository.findById(budgetId)
-                .orElseThrow(() -> new EntityNotFoundException("Budget not found with id: " + budgetId));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BUDGET_NOT_FOUND,
+                        "Budget not found with id: " + budgetId));
 
-        // 2. Kiểm tra user có BudgetMember ACCEPTED trong budget
         BudgetMember member = budgetMemberRepository.findByUserIdAndBudgetId(userId, budgetId)
-                .orElseThrow(() -> new EntityNotFoundException("User is not a member of this budget"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.MEMBER_NOT_FOUND,
+                        "User is not a member of this budget"));
 
         if (member.getStatus() != MemberStatus.ACCEPTED) {
-            throw new IllegalStateException("User's membership is not ACCEPTED");
+            throw new ForbiddenException(ErrorCode.MEMBERSHIP_NOT_ACCEPTED, "User's membership is not ACCEPTED");
         }
 
-        // 3. Tạo Transaction
         Transaction transaction = Transaction.builder()
                 .type(type)
                 .amount(amount)
@@ -61,11 +57,11 @@ public class TransactionServiceImpl implements TransactionService {
                 .build();
         transactionRepository.save(transaction);
 
-        // 4. Gắn tags (tạo TransactionTag cho từng tagId)
         if (tagIds != null && !tagIds.isEmpty()) {
             for (Long tagId : tagIds) {
                 Tag tag = tagRepository.findById(tagId)
-                        .orElseThrow(() -> new EntityNotFoundException("Tag not found with id: " + tagId));
+                        .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.TAG_NOT_FOUND,
+                                "Tag not found with id: " + tagId));
 
                 TransactionTag transactionTag = TransactionTag.builder()
                         .transaction(transaction)
@@ -81,10 +77,11 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     public Transaction updateTransaction(Long transactionId, TransactionType type,
-                                         BigDecimal amount, String description, String note,
-                                         LocalDate transactionDate, List<Long> tagIds) {
+            BigDecimal amount, String description, String note,
+            LocalDate transactionDate, List<Long> tagIds) {
         Transaction transaction = transactionRepository.findById(transactionId)
-                .orElseThrow(() -> new EntityNotFoundException("Transaction not found with id: " + transactionId));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.TRANSACTION_NOT_FOUND,
+                        "Transaction not found with id: " + transactionId));
 
         transaction.setType(type);
         transaction.setAmount(amount);
@@ -92,13 +89,13 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.setNote(note);
         transaction.setTransactionDate(transactionDate);
 
-        // Cập nhật tags: xoá hết cũ, gắn lại mới
         transactionTagRepository.deleteAllByTransactionId(transactionId);
 
         if (tagIds != null && !tagIds.isEmpty()) {
             for (Long tagId : tagIds) {
                 Tag tag = tagRepository.findById(tagId)
-                        .orElseThrow(() -> new EntityNotFoundException("Tag not found with id: " + tagId));
+                        .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.TAG_NOT_FOUND,
+                                "Tag not found with id: " + tagId));
 
                 TransactionTag transactionTag = TransactionTag.builder()
                         .transaction(transaction)
@@ -115,21 +112,19 @@ public class TransactionServiceImpl implements TransactionService {
     @Transactional
     public void deleteTransaction(Long transactionId) {
         Transaction transaction = transactionRepository.findById(transactionId)
-                .orElseThrow(() -> new EntityNotFoundException("Transaction not found with id: " + transactionId));
-        transactionRepository.delete(transaction); // Cascade xoá TransactionTag
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.TRANSACTION_NOT_FOUND,
+                        "Transaction not found with id: " + transactionId));
+        transactionRepository.delete(transaction);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Transaction getTransactionById(Long transactionId) {
         return transactionRepository.findById(transactionId)
-                .orElseThrow(() -> new EntityNotFoundException("Transaction not found with id: " + transactionId));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.TRANSACTION_NOT_FOUND,
+                        "Transaction not found with id: " + transactionId));
     }
 
-    /**
-     * Danh sách giao dịch theo Budget, có phân trang & sắp xếp.
-     * Ví dụ: Pageable = PageRequest.of(0, 20, Sort.by("transactionDate").descending())
-     */
     @Override
     @Transactional(readOnly = true)
     public Page<Transaction> getTransactionsByBudget(Long budgetId, Pageable pageable) {
@@ -144,13 +139,11 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Transaction> getTransactionsByDateRange(Long budgetId, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+    public Page<Transaction> getTransactionsByDateRange(Long budgetId, LocalDate startDate, LocalDate endDate,
+            Pageable pageable) {
         return transactionRepository.findAllByBudgetIdAndTransactionDateBetween(budgetId, startDate, endDate, pageable);
     }
 
-    /**
-     * Thống kê tổng thu/chi theo Budget.
-     */
     @Override
     @Transactional(readOnly = true)
     public Map<TransactionType, BigDecimal> getSummaryByBudget(Long budgetId) {

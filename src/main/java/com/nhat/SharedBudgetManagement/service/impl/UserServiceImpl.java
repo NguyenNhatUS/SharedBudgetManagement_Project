@@ -1,9 +1,10 @@
 package com.nhat.SharedBudgetManagement.service.impl;
 
 import com.nhat.SharedBudgetManagement.entity.User;
+import com.nhat.SharedBudgetManagement.exception.ErrorCode;
+import com.nhat.SharedBudgetManagement.exception.ResourceNotFoundException;
 import com.nhat.SharedBudgetManagement.repository.UserRepository;
 import com.nhat.SharedBudgetManagement.service.UserService;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,14 +19,14 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public User getUserById(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND, "User not found with id: " + userId));
     }
 
     @Override
     @Transactional(readOnly = true)
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND, "User not found with email: " + email));
     }
 
     @Override

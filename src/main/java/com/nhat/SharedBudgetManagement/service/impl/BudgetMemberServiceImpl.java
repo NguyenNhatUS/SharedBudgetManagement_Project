@@ -5,12 +5,14 @@ import com.nhat.SharedBudgetManagement.entity.BudgetMember;
 import com.nhat.SharedBudgetManagement.entity.User;
 import com.nhat.SharedBudgetManagement.entity.enums.BudgetRole;
 import com.nhat.SharedBudgetManagement.entity.enums.MemberStatus;
+import com.nhat.SharedBudgetManagement.exception.*;
 import com.nhat.SharedBudgetManagement.repository.BudgetMemberRepository;
 import com.nhat.SharedBudgetManagement.repository.BudgetRepository;
 import com.nhat.SharedBudgetManagement.repository.UserRepository;
 import com.nhat.SharedBudgetManagement.service.BudgetMemberService;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
@@ -25,23 +27,23 @@ public class BudgetMemberServiceImpl implements BudgetMemberService {
     private final BudgetRepository budgetRepository;
     private final UserRepository userRepository;
 
-
     @Override
     @Transactional
     public BudgetMember inviteMember(Long budgetId, String email, BudgetRole role) {
         Budget budget = budgetRepository.findById(budgetId)
-                .orElseThrow(() -> new EntityNotFoundException("Budget not found with id: " + budgetId));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BUDGET_NOT_FOUND,
+                        "Budget not found with id: " + budgetId));
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
-
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND,
+                        "User not found with email: " + email));
 
         if (budgetMemberRepository.existsByUserIdAndBudgetId(user.getId(), budgetId)) {
-            throw new IllegalStateException("User is already a member of this budget");
+            throw new ConflictException(ErrorCode.MEMBER_ALREADY_EXISTS, "User is already a member of this budget");
         }
 
         if (role == BudgetRole.OWNER) {
-            throw new IllegalArgumentException("Cannot invite a member with OWNER role");
+            throw new BadRequestException(ErrorCode.CANNOT_INVITE_OWNER, "Cannot invite a member with OWNER role");
         }
 
         BudgetMember member = BudgetMember.builder()
@@ -59,10 +61,11 @@ public class BudgetMemberServiceImpl implements BudgetMemberService {
     @Transactional
     public BudgetMember acceptInvite(String inviteToken) {
         BudgetMember member = budgetMemberRepository.findByInviteToken(inviteToken)
-                .orElseThrow(() -> new EntityNotFoundException("Invalid invite token"));
+                .orElseThrow(() -> new BadRequestException(ErrorCode.INVALID_INVITE_TOKEN, "Invalid invite token"));
 
         if (member.getStatus() != MemberStatus.PENDING) {
-            throw new IllegalStateException("Invitation has already been processed");
+            throw new BadRequestException(ErrorCode.INVITATION_ALREADY_PROCESSED,
+                    "Invitation has already been processed");
         }
 
         member.setStatus(MemberStatus.ACCEPTED);
@@ -75,10 +78,11 @@ public class BudgetMemberServiceImpl implements BudgetMemberService {
     @Transactional
     public BudgetMember declineInvite(String inviteToken) {
         BudgetMember member = budgetMemberRepository.findByInviteToken(inviteToken)
-                .orElseThrow(() -> new EntityNotFoundException("Invalid invite token"));
+                .orElseThrow(() -> new BadRequestException(ErrorCode.INVALID_INVITE_TOKEN, "Invalid invite token"));
 
         if (member.getStatus() != MemberStatus.PENDING) {
-            throw new IllegalStateException("Invitation has already been processed");
+            throw new BadRequestException(ErrorCode.INVITATION_ALREADY_PROCESSED,
+                    "Invitation has already been processed");
         }
 
         member.setStatus(MemberStatus.DECLINED);
@@ -90,16 +94,15 @@ public class BudgetMemberServiceImpl implements BudgetMemberService {
     @Transactional
     public BudgetMember changeMemberRole(Long budgetId, Long userId, BudgetRole newRole) {
         BudgetMember member = budgetMemberRepository.findByUserIdAndBudgetId(userId, budgetId)
-                .orElseThrow(() -> new EntityNotFoundException("Member not found in this budget"));
-
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.MEMBER_NOT_FOUND,
+                        "Member not found in this budget"));
 
         if (member.getRole() == BudgetRole.OWNER) {
-            throw new IllegalStateException("Cannot change the role of the OWNER");
+            throw new ForbiddenException(ErrorCode.CANNOT_MODIFY_OWNER, "Cannot change the role of the OWNER");
         }
 
-
         if (newRole == BudgetRole.OWNER) {
-            throw new IllegalArgumentException("Cannot assign OWNER role to a member");
+            throw new BadRequestException(ErrorCode.CANNOT_ASSIGN_OWNER_ROLE, "Cannot assign OWNER role to a member");
         }
 
         member.setRole(newRole);
@@ -110,11 +113,11 @@ public class BudgetMemberServiceImpl implements BudgetMemberService {
     @Transactional
     public void removeMember(Long budgetId, Long userId) {
         BudgetMember member = budgetMemberRepository.findByUserIdAndBudgetId(userId, budgetId)
-                .orElseThrow(() -> new EntityNotFoundException("Member not found in this budget"));
-
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.MEMBER_NOT_FOUND,
+                        "Member not found in this budget"));
 
         if (member.getRole() == BudgetRole.OWNER) {
-            throw new IllegalStateException("Cannot remove the OWNER from the budget");
+            throw new ForbiddenException(ErrorCode.CANNOT_MODIFY_OWNER, "Cannot remove the OWNER from the budget");
         }
 
         budgetMemberRepository.delete(member);
@@ -124,11 +127,12 @@ public class BudgetMemberServiceImpl implements BudgetMemberService {
     @Transactional
     public void leaveBudget(Long budgetId, Long userId) {
         BudgetMember member = budgetMemberRepository.findByUserIdAndBudgetId(userId, budgetId)
-                .orElseThrow(() -> new EntityNotFoundException("Member not found in this budget"));
-
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.MEMBER_NOT_FOUND,
+                        "Member not found in this budget"));
 
         if (member.getRole() == BudgetRole.OWNER) {
-            throw new IllegalStateException("OWNER cannot leave the budget. Transfer ownership or delete the budget instead.");
+            throw new ForbiddenException(ErrorCode.OWNER_CANNOT_LEAVE,
+                    "OWNER cannot leave the budget. Transfer ownership or delete the budget instead.");
         }
 
         budgetMemberRepository.delete(member);
@@ -142,9 +146,16 @@ public class BudgetMemberServiceImpl implements BudgetMemberService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<BudgetMember> getMembersByBudgetId(Long budgetId, Pageable pageable) {
+        return budgetMemberRepository.findAllByBudgetId(budgetId, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public BudgetRole getMemberRole(Long budgetId, Long userId) {
         BudgetMember member = budgetMemberRepository.findByUserIdAndBudgetId(userId, budgetId)
-                .orElseThrow(() -> new EntityNotFoundException("Member not found in this budget"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.MEMBER_NOT_FOUND,
+                        "Member not found in this budget"));
         return member.getRole();
     }
 }
