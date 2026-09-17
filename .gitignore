@@ -32,7 +32,10 @@ build/
 ### VS Code ###
 .vscode/
 
+### Environment Variables ###
+.env
+*.env
+!.env.example
+
 src/BudgetShare-Project.md
 src/TONG_KET_CAC_GIAI_DOAN.md
-
-git rm --cached -f BudgetShare-Project.md
