@@ -15,10 +15,7 @@ public class SharedBudgetManagementApplication {
 		SpringApplication.run(SharedBudgetManagementApplication.class, args);
 	}
 
-	/**
-	 * Tự động nạp các biến từ file .env vào System Properties khi chạy Local,
-	 * nếu biến đó chưa được định nghĩa trong System Environment của OS/Docker.
-	 */
+
 	private static void loadDotenv() {
 		File envFile = new File(".env");
 		if (envFile.exists() && envFile.isFile()) {
