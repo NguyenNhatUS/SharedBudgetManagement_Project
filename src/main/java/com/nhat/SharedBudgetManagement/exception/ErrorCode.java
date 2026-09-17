@@ -47,7 +47,10 @@ public enum ErrorCode {
 
     // OAuth2
     OAUTH2_AUTHENTICATION_FAILED(1027, "OAuth2 authentication failed", HttpStatus.UNAUTHORIZED),
-    OAUTH2_EMAIL_NOT_PROVIDED(1028, "Email not provided by OAuth2 provider", HttpStatus.BAD_REQUEST);
+    OAUTH2_EMAIL_NOT_PROVIDED(1028, "Email not provided by OAuth2 provider", HttpStatus.BAD_REQUEST),
+
+    // Mail & Password Reset OTP
+    INVALID_OTP(1029, "Invalid or expired OTP code", HttpStatus.BAD_REQUEST);
 
     private final int code;
     private final String message;

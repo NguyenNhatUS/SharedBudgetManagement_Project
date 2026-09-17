@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+
+
 @Service
 @RequiredArgsConstructor
 public class BudgetServiceImpl implements BudgetService {
@@ -33,7 +35,6 @@ public class BudgetServiceImpl implements BudgetService {
     public Budget createBudget(Long userId, String name, String description, String currency) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND, "User not found with id: " + userId));
-
 
         Budget budget = Budget.builder()
                 .name(name)

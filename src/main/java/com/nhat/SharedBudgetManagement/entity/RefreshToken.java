@@ -60,9 +60,7 @@ public class RefreshToken {
         this.createdAt = LocalDateTime.now();
     }
 
-    /**
-     * Kiểm tra token có còn hiệu lực không (chưa hết hạn và chưa bị thu hồi).
-     */
+
     public boolean isValid() {
         return !this.revoked && this.expiryDate.isAfter(LocalDateTime.now());
     }

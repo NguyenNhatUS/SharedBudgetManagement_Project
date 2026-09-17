@@ -740,7 +740,7 @@ curl -X POST "http://localhost:8080/api/v1/auth/logout" \
 - [x] **Phase 4: Global Exception Handling** — `@RestControllerAdvice`, `ErrorCode` enum, domain exception hierarchy, and Bean Validation error mapping.
 - [x] **Phase 5: Core Security & JWT Authentication** — Spring Security 6, login/register, JWT access/refresh token rotation, Resource-Based Authorization (`OWNER`, `EDITOR`, `VIEWER`).
 - [x] **Phase 6: OAuth2 Social Login Integration** — Google OAuth2 Login, OpenID Connect, CustomOAuth2UserService, Account Linking, JWT token issuance pipeline.
-- [ ] **Phase 7: Redis Caching & Rate Limiting** — Cache-Aside for tags/summaries, token blacklisting for instant logout, sliding-window rate limiting.
+- [x] **Phase 7: Redis Caching & Rate Limiting (COMPLETED)** — Cache-Aside for tags/summaries, token blacklisting for instant logout, sliding-window rate limiting.
 - [ ] **Phase 8: Spring Mail Integration** — Asynchronous email delivery for budget invitations (`inviteToken`) and password reset (TTL via Redis).
 - [ ] **Phase 9: Comprehensive Automated Testing (Service Layer)** — Extensive unit and mock tests with JUnit 5 and Mockito covering all business edge cases.
 - [ ] **Phase 10: Interactive OpenAPI 3 / Swagger Documentation** — SpringDoc OpenAPI 3 interactive API playground with Bearer JWT Auth support.
@@ -748,3 +748,12 @@ curl -X POST "http://localhost:8080/api/v1/auth/logout" \
 - [ ] **Phase 12: Message Queue & Event-Driven Architecture (RabbitMQ - Optional Extension)** — Decouple heavy background workloads (asynchronous email dispatch, budget overrun alerts) with Dead Letter Queues (DLQ) and exponential retry policies.
 
 ---
+
+## 📚 Supplementary Documentation & Architectural Guides
+
+* **[KIEM_THU_GIAI_DOAN_7.md](KIEM_THU_GIAI_DOAN_7.md)**: Phase 7 verification report, comparison with Phase 6, Redis setup guide, and end-to-end test scenarios.
+* **[HUONG_DAN_REDIS_CACHING_RATE_LIMIT.md](HUONG_DAN_REDIS_CACHING_RATE_LIMIT.md)**: Complete practical handbook on Redis Caching (Cache-Aside), Token Blacklist (Defensive Revocation), and Rate Limiting (Atomic Sliding Window) with standalone demo code.
+* **[HUONG_DAN_UNIT_TEST_MOCKITO.md](HUONG_DAN_UNIT_TEST_MOCKITO.md)**: Complete practical handbook on Unit Testing with JUnit 5 & Mockito, containing layer-by-layer templates for all project services, controllers, and security components.
+* **[OAUTH2_EXPLANATION.md](OAUTH2_EXPLANATION.md)**: Comprehensive architectural guide on OAuth 2.0, OpenID Connect (OIDC), and Google Login.
+* **[TONG_KET_CAC_GIAI_DOAN.md](TONG_KET_CAC_GIAI_DOAN.md)**: Detailed phase-by-phase architectural summary, bug fix records, and engineering progression.
+* **[BudgetShare-Project.md](BudgetShare-Project.md)**: Original project proposal and requirements specification.

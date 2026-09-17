@@ -1,5 +1,6 @@
 package com.nhat.SharedBudgetManagement.service.impl;
 
+import com.nhat.SharedBudgetManagement.config.RedisConfig;
 import com.nhat.SharedBudgetManagement.entity.*;
 import com.nhat.SharedBudgetManagement.entity.enums.MemberStatus;
 import com.nhat.SharedBudgetManagement.entity.enums.TransactionType;
@@ -9,10 +10,13 @@ import com.nhat.SharedBudgetManagement.exception.ResourceNotFoundException;
 import com.nhat.SharedBudgetManagement.repository.*;
 import com.nhat.SharedBudgetManagement.service.TransactionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -31,6 +35,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {RedisConfig.CACHE_BUDGET_SUMMARY, RedisConfig.CACHE_BUDGET_MEMBER_EXPENSE}, key = "#budgetId")
     public Transaction createTransaction(Long budgetId, Long userId, TransactionType type,
             BigDecimal amount, String description, String note,
             LocalDate transactionDate, List<Long> tagIds) {
@@ -76,6 +81,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {RedisConfig.CACHE_BUDGET_SUMMARY, RedisConfig.CACHE_BUDGET_MEMBER_EXPENSE}, key = "#result.budget.id")
     public Transaction updateTransaction(Long transactionId, TransactionType type,
             BigDecimal amount, String description, String note,
             LocalDate transactionDate, List<Long> tagIds) {
@@ -110,6 +116,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {RedisConfig.CACHE_BUDGET_SUMMARY, RedisConfig.CACHE_BUDGET_MEMBER_EXPENSE}, allEntries = true)
     public void deleteTransaction(Long transactionId) {
         Transaction transaction = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.TRANSACTION_NOT_FOUND,
@@ -146,6 +153,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = RedisConfig.CACHE_BUDGET_SUMMARY, key = "#budgetId")
     public Map<TransactionType, BigDecimal> getSummaryByBudget(Long budgetId) {
         List<Object[]> results = transactionRepository.sumAmountByBudgetIdGroupByType(budgetId);
         Map<TransactionType, BigDecimal> summary = new HashMap<>();
@@ -162,6 +170,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = RedisConfig.CACHE_BUDGET_MEMBER_EXPENSE, key = "#budgetId")
     public List<Object[]> getExpenseByMember(Long budgetId) {
         return transactionRepository.sumExpenseByBudgetIdGroupByMember(budgetId);
     }

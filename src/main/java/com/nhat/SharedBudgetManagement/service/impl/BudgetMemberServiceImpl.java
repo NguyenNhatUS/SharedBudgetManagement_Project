@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import com.nhat.SharedBudgetManagement.service.EmailService;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,6 +27,7 @@ public class BudgetMemberServiceImpl implements BudgetMemberService {
     private final BudgetMemberRepository budgetMemberRepository;
     private final BudgetRepository budgetRepository;
     private final UserRepository userRepository;
+    private final EmailService emailService;
 
     @Override
     @Transactional
@@ -54,7 +56,13 @@ public class BudgetMemberServiceImpl implements BudgetMemberService {
                 .inviteToken(UUID.randomUUID().toString())
                 .build();
 
-        return budgetMemberRepository.save(member);
+        BudgetMember savedMember = budgetMemberRepository.save(member);
+
+        // Gửi email mời tham gia ngân sách bất đồng bộ qua Spring Mail
+        String inviterName = budget.getCreatedBy() != null ? budget.getCreatedBy().getFullName() : "Chủ ngân sách";
+        emailService.sendBudgetInvitationEmail(user.getEmail(), budget.getName(), inviterName, savedMember.getInviteToken());
+
+        return savedMember;
     }
 
     @Override
