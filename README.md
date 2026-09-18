@@ -4,27 +4,6 @@
 
 ---
 
-## 📖 Table of Contents
-
-- [Overview](#-overview)
-- [Core Business Domain & Key Workflows](#-core-business-domain--key-workflows)
-  - [1. Shared Budget Lifecycle](#1-shared-budget-lifecycle)
-  - [2. Member Invitation & Roles](#2-member-invitation--roles)
-  - [3. Transaction & Tag Categorization](#3-transaction--tag-categorization)
-  - [4. Financial Aggregation & Statistics](#4-financial-aggregation--statistics)
-- [Database Design & ERD](#-database-design--erd)
-  - [Entity Relationship Diagram](#entity-relationship-diagram)
-  - [Data Model Highlights](#data-model-highlights)
-- [Technology Stack](#-technology-stack)
-- [Project Architecture & Package Structure](#-project-architecture--package-structure)
-- [Getting Started](#-getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Database Configuration](#database-configuration)
-  - [Build & Run](#build--run)
-- [API Documentation & Quick Test Samples](#-api-documentation--quick-test-samples)
-- [Roadmap & Implementation Phases](#-roadmap--implementation-phases)
-
----
 
 ## 🌟 Overview
 
@@ -732,28 +711,3 @@ curl -X POST "http://localhost:8080/api/v1/auth/logout" \
 
 ---
 
-## 🗺 Roadmap & Implementation Phases
-
-- [x] **Phase 1: Database & Entity Design** — Tables, intermediate entities, relationships, constraints, and enums.
-- [x] **Phase 2: Base CRUD & Advanced JPA** — Repositories, pagination/sorting, `@EntityGraph` anti-N+1 loading, atomic service transactions.
-- [x] **Phase 3: REST API Layer & DTO Standardization** — MapStruct mappers, `ApiResponse<T>` / `PageResponse<T>`, request validations, versioned controllers.
-- [x] **Phase 4: Global Exception Handling** — `@RestControllerAdvice`, `ErrorCode` enum, domain exception hierarchy, and Bean Validation error mapping.
-- [x] **Phase 5: Core Security & JWT Authentication** — Spring Security 6, login/register, JWT access/refresh token rotation, Resource-Based Authorization (`OWNER`, `EDITOR`, `VIEWER`).
-- [x] **Phase 6: OAuth2 Social Login Integration** — Google OAuth2 Login, OpenID Connect, CustomOAuth2UserService, Account Linking, JWT token issuance pipeline.
-- [x] **Phase 7: Redis Caching & Rate Limiting (COMPLETED)** — Cache-Aside for tags/summaries, token blacklisting for instant logout, sliding-window rate limiting.
-- [ ] **Phase 8: Spring Mail Integration** — Asynchronous email delivery for budget invitations (`inviteToken`) and password reset (TTL via Redis).
-- [ ] **Phase 9: Comprehensive Automated Testing (Service Layer)** — Extensive unit and mock tests with JUnit 5 and Mockito covering all business edge cases.
-- [ ] **Phase 10: Interactive OpenAPI 3 / Swagger Documentation** — SpringDoc OpenAPI 3 interactive API playground with Bearer JWT Auth support.
-- [ ] **Phase 11: Containerization, DevOps & CI/CD Pipelines** — Multi-stage `Dockerfile` (<200MB), `docker-compose.yml` (App + MySQL 8 + Redis), and automated GitHub Actions CI/CD pipelines.
-- [ ] **Phase 12: Message Queue & Event-Driven Architecture (RabbitMQ - Optional Extension)** — Decouple heavy background workloads (asynchronous email dispatch, budget overrun alerts) with Dead Letter Queues (DLQ) and exponential retry policies.
-
----
-
-## 📚 Supplementary Documentation & Architectural Guides
-
-* **[KIEM_THU_GIAI_DOAN_7.md](KIEM_THU_GIAI_DOAN_7.md)**: Phase 7 verification report, comparison with Phase 6, Redis setup guide, and end-to-end test scenarios.
-* **[HUONG_DAN_REDIS_CACHING_RATE_LIMIT.md](HUONG_DAN_REDIS_CACHING_RATE_LIMIT.md)**: Complete practical handbook on Redis Caching (Cache-Aside), Token Blacklist (Defensive Revocation), and Rate Limiting (Atomic Sliding Window) with standalone demo code.
-* **[HUONG_DAN_UNIT_TEST_MOCKITO.md](HUONG_DAN_UNIT_TEST_MOCKITO.md)**: Complete practical handbook on Unit Testing with JUnit 5 & Mockito, containing layer-by-layer templates for all project services, controllers, and security components.
-* **[OAUTH2_EXPLANATION.md](OAUTH2_EXPLANATION.md)**: Comprehensive architectural guide on OAuth 2.0, OpenID Connect (OIDC), and Google Login.
-* **[TONG_KET_CAC_GIAI_DOAN.md](TONG_KET_CAC_GIAI_DOAN.md)**: Detailed phase-by-phase architectural summary, bug fix records, and engineering progression.
-* **[BudgetShare-Project.md](BudgetShare-Project.md)**: Original project proposal and requirements specification.
