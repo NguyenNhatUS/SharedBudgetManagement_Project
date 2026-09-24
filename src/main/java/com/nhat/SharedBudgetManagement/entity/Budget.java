@@ -2,7 +2,6 @@ package com.nhat.SharedBudgetManagement.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,9 +30,7 @@ public class Budget {
     @Column(length = 500)
     private String description;
 
-    /**
-     * Đơn vị tiền tệ (VND, USD...). Mặc định VND.
-     */
+
     @Column(nullable = false, length = 10)
     @Builder.Default
     private String currency = "VND";
