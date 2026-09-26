@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -69,13 +70,19 @@ public class AuthController {
     @RateLimit(maxRequests = 3, windowSeconds = 60)
     public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         authService.forgotPassword(request);
-        return ResponseEntity.ok(ApiResponse.success("Mã OTP đặt lại mật khẩu đã được gửi đến email của bạn", null));
+
+        return ResponseEntity.ok(
+                ApiResponse.success("The password reset OTP has been sent to your email", null)
+        );
     }
 
     @PostMapping("/reset-password")
     @RateLimit(maxRequests = 5, windowSeconds = 60)
     public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request);
-        return ResponseEntity.ok(ApiResponse.success("Mật khẩu đã được đặt lại thành công. Vui lòng đăng nhập lại", null));
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Password reset successfully. Please log in again.", null)
+        );
     }
 }

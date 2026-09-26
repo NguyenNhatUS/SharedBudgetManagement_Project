@@ -2,7 +2,6 @@ package com.nhat.SharedBudgetManagement;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,5 +38,4 @@ public class SharedBudgetManagementApplication {
 			}
 		}
 	}
-
 }

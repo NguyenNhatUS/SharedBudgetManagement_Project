@@ -33,10 +33,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDateTime;
+
 
 @Slf4j
 @Service
@@ -207,7 +207,7 @@ public class AuthServiceImpl implements AuthService {
         String cachedOtp = stringRedisTemplate.opsForValue().get(redisKey);
 
         if (cachedOtp == null || !cachedOtp.equals(request.getOtp().trim())) {
-            throw new BadRequestException(ErrorCode.INVALID_OTP, "Mã OTP không hợp lệ hoặc đã hết hạn");
+            throw new BadRequestException(ErrorCode.INVALID_OTP, "Invalid or expired OTP");
         }
 
         User user = userRepository.findByEmail(email)
@@ -242,4 +242,3 @@ public class AuthServiceImpl implements AuthService {
         return tokenStr;
     }
 }
-
